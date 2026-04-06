@@ -1086,11 +1086,13 @@ function renderCatalogo(cat,busca){
   if(cat)d=d.filter(x=>x.cat===cat);if(busca)d=d.filter(x=>x.nome.toLowerCase().includes((busca||'').toLowerCase()));
   const btn=document.getElementById('btn-novo-cat');if(btn)btn.style.display=canEdit?'inline-flex':'none';
   document.getElementById('cat-body').innerHTML=d.map(c=>{const ri=catalogoItens.indexOf(c);
-    if(canEdit)return`<tr><td><select class="es" onchange="catalogoItens[${ri}].cat=this.value">${ALL_CATS.map(x=>`<option${x===c.cat?' selected':''}>${x}</option>`).join('')}</select></td><td><input class="ei" value="${c.nome}" style="width:100%;min-width:180px" onchange="catalogoItens[${ri}].nome=this.value"></td><td><input class="ei" type="number" value="${c.qtd}" style="width:60px" onchange="catalogoItens[${ri}].qtd=parseInt(this.value)||1"></td><td><input class="ei" value="${c.obs||''}" placeholder="—" style="min-width:100px" onchange="catalogoItens[${ri}].obs=this.value"></td><td><button class="btn-del" onclick="catalogoItens.splice(${ri},1);renderCatalogo()" title="Excluir">${TRASH}</button></td></tr>`;
+    if(canEdit)return`<tr><td><select class="es" onchange="updCatField(${ri},'cat',this.value)">${ALL_CATS.map(x=>`<option${x===c.cat?' selected':''}>${x}</option>`).join('')}</select></td><td><input class="ei" value="${c.nome}" style="width:100%;min-width:180px" onchange="updCatField(${ri},'nome',this.value)"></td><td><input class="ei" type="number" value="${c.qtd}" style="width:60px" onchange="updCatField(${ri},'qtd',parseInt(this.value)||1)"></td><td><input class="ei" value="${c.obs||''}" placeholder="—" style="min-width:100px" onchange="updCatField(${ri},'obs',this.value)"></td><td><button class="btn-del" onclick="delCatItem(${ri})" title="Excluir">${TRASH}</button></td></tr>`;
     return`<tr><td><span class="tag">${c.cat}</span></td><td style="font-size:12px">${c.nome}</td><td>${c.qtd}</td><td style="color:var(--text2)">${c.obs||'—'}</td><td></td></tr>`;
   }).join('');
 }
-function addCatItem(){const nome=document.getElementById('ci-nome').value.trim();if(!nome)return;catalogoItens.push({cat:document.getElementById('ci-cat').value,nome,qtd:parseInt(document.getElementById('ci-qtd').value)||1,obs:document.getElementById('ci-obs').value});hideMod('cat-item');renderCatalogo();}
+async function addCatItem(){const nome=document.getElementById('ci-nome').value.trim();if(!nome)return;const item={cat:document.getElementById('ci-cat').value,nome,qtd:parseInt(document.getElementById('ci-qtd').value)||1,obs:document.getElementById('ci-obs').value};const r=await sbFetch('/rest/v1/catalogo',{method:'POST',body:JSON.stringify(item)});if(r&&r[0])item._id=r[0].id;catalogoItens.push(item);hideMod('cat-item');renderCatalogo();}
+function updCatField(ri,field,val){catalogoItens[ri][field]=val;const c=catalogoItens[ri];if(c._id)sbFetch(`/rest/v1/catalogo?id=eq.${c._id}`,{method:'PATCH',body:JSON.stringify({[field]:val})});}
+function delCatItem(ri){const c=catalogoItens[ri];if(c._id)sbFetch(`/rest/v1/catalogo?id=eq.${c._id}`,{method:'DELETE'});catalogoItens.splice(ri,1);renderCatalogo();}
 
 // ── CRONOGRAMA PADRÃO ──
 function renderCronPadrao(){
@@ -1099,7 +1101,7 @@ function renderCronPadrao(){
   document.getElementById('cronpadrao-body').innerHTML=cronPadrao.map((t,i)=>{
     const deps=t.deps&&t.deps.length?t.deps.map(d=>cronPadrao[d]?.d?.substring(0,18)+'...').join(', '):'—';
     return`<tr><td style="color:var(--text3);font-size:11px">${i+1}</td><td style="font-size:12px">${t.d}</td><td>${deptTag(t.dept)}</td><td style="text-align:center">${t.prazo}d</td><td style="font-size:11px;color:var(--text2);max-width:160px">${deps}</td>
-    <td>${canEdit?`<div style="display:flex;gap:4px"><button class="btn" style="font-size:11px;padding:3px 9px" onclick="editCronPadrao(${i})">✎</button><button class="btn-del" onclick="if(confirm('Excluir?')){cronPadrao.splice(${i},1);renderCronPadrao();}" title="Excluir">${TRASH}</button></div>`:''}</td></tr>`;
+    <td>${canEdit?`<div style="display:flex;gap:4px"><button class="btn" style="font-size:11px;padding:3px 9px" onclick="editCronPadrao(${i})">✎</button><button class="btn-del" onclick="delCronPadrao(${i})" title="Excluir">${TRASH}</button></div>`:''}</td></tr>`;
   }).join('');
 }
 function openCronPadraoNew(){document.getElementById('cp-title').textContent='Nova tarefa padrão';document.getElementById('cp-idx').value=-1;document.getElementById('cp-desc').value='';document.getElementById('cp-prazo').value='';document.getElementById('cp-dep').innerHTML=cronPadrao.map((x,i)=>`<option value="${i}">${i+1}. ${x.d.substring(0,35)}</option>`).join('');showMod('cron-padrao');}
@@ -1109,24 +1111,28 @@ function editCronPadrao(i){
   document.getElementById('cp-dep').innerHTML=cronPadrao.map((x,j)=>j!==i?`<option value="${j}"${(t.deps||[]).includes(j)?' selected':''}>${j+1}. ${x.d.substring(0,35)}</option>`:'').join('');
   showMod('cron-padrao');
 }
-function salvarCronPadrao(){
+async function salvarCronPadrao(){
   const d=document.getElementById('cp-desc').value.trim();if(!d)return;
   const sel=document.getElementById('cp-dep');const deps=[...sel.selectedOptions].map(o=>parseInt(o.value)).filter(v=>!isNaN(v));
   const idx=parseInt(document.getElementById('cp-idx').value);
-  if(idx>=0)cronPadrao[idx]={...cronPadrao[idx],d,dept:document.getElementById('cp-dept').value,prazo:parseInt(document.getElementById('cp-prazo').value)||7,deps};
-  else cronPadrao.push({d,dept:document.getElementById('cp-dept').value,prazo:parseInt(document.getElementById('cp-prazo').value)||7,deps});
+  const dept=document.getElementById('cp-dept').value,prazo=parseInt(document.getElementById('cp-prazo').value)||7;
+  if(idx>=0){cronPadrao[idx]={...cronPadrao[idx],d,dept,prazo,deps};const t=cronPadrao[idx];if(t._id)sbFetch(`/rest/v1/cron_padrao?id=eq.${t._id}`,{method:'PATCH',body:JSON.stringify({descricao:d,dept,prazo,deps})});}
+  else{const novo={d,dept,prazo,deps};const r=await sbFetch('/rest/v1/cron_padrao',{method:'POST',body:JSON.stringify({descricao:d,dept,prazo,deps})});if(r&&r[0])novo._id=r[0].id;cronPadrao.push(novo);}
   hideMod('cron-padrao');renderCronPadrao();
 }
+function delCronPadrao(i){if(!confirm('Excluir?'))return;const t=cronPadrao[i];if(t._id)sbFetch(`/rest/v1/cron_padrao?id=eq.${t._id}`,{method:'DELETE'});cronPadrao.splice(i,1);renderCronPadrao();}
 
 // ── FILIAIS ATIVAS ──
 function renderFiliaisAtivas(){
   document.getElementById('fat-body').innerHTML=filiaisAtivas.map((f,i)=>`<tr>
-    <td><input class="ei" value="${f.nome}" style="min-width:130px" onchange="filiaisAtivas[${i}].nome=this.value"></td>
-    <td style="display:flex;gap:6px"><input class="ei" value="${f.cidade}" style="min-width:100px" onchange="filiaisAtivas[${i}].cidade=this.value"><input class="ei" value="${f.uf}" style="width:40px;text-align:center" maxlength="2" onchange="filiaisAtivas[${i}].uf=this.value"></td>
-    <td><input class="ei" value="${f.cod||''}" style="width:70px" onchange="filiaisAtivas[${i}].cod=this.value"></td>
-    <td><button class="btn-del" onclick="filiaisAtivas.splice(${i},1);renderFiliaisAtivas()" title="Excluir">${TRASH}</button></td></tr>`).join('');
+    <td><input class="ei" value="${f.nome}" style="min-width:130px" onchange="updFilialAtivaField(${i},'nome',this.value)"></td>
+    <td style="display:flex;gap:6px"><input class="ei" value="${f.cidade}" style="min-width:100px" onchange="updFilialAtivaField(${i},'cidade',this.value)"><input class="ei" value="${f.uf}" style="width:40px;text-align:center" maxlength="2" onchange="updFilialAtivaField(${i},'uf',this.value)"></td>
+    <td><input class="ei" value="${f.cod||''}" style="width:70px" onchange="updFilialAtivaField(${i},'cod',this.value)"></td>
+    <td><button class="btn-del" onclick="delFilialAtiva(${i})" title="Excluir">${TRASH}</button></td></tr>`).join('');
 }
-function addFilialAtiva(){const nome=document.getElementById('fa-nome').value.trim();if(!nome)return;const id='fa'+Date.now();filiaisAtivas.push({id,nome,cidade:document.getElementById('fa-cidade').value,uf:document.getElementById('fa-uf').value,cod:document.getElementById('fa-cod').value});hideMod('filial-ativa');renderFiliaisAtivas();}
+async function addFilialAtiva(){const nome=document.getElementById('fa-nome').value.trim();if(!nome)return;const id='fa'+Date.now();const nova={id,nome,cidade:document.getElementById('fa-cidade').value,uf:document.getElementById('fa-uf').value,cod:document.getElementById('fa-cod').value};const r=await sbFetch('/rest/v1/filiais_ativas',{method:'POST',body:JSON.stringify(nova)});if(r&&r[0])nova._id=r[0].id;filiaisAtivas.push(nova);hideMod('filial-ativa');renderFiliaisAtivas();}
+function updFilialAtivaField(i,field,val){filiaisAtivas[i][field]=val;const f=filiaisAtivas[i];if(f._id)sbFetch(`/rest/v1/filiais_ativas?id=eq.${f._id}`,{method:'PATCH',body:JSON.stringify({[field]:val})});}
+function delFilialAtiva(i){const f=filiaisAtivas[i];if(f._id)sbFetch(`/rest/v1/filiais_ativas?id=eq.${f._id}`,{method:'DELETE'});filiaisAtivas.splice(i,1);renderFiliaisAtivas();}
 
 // ── USUÁRIOS ──
 function renderUsers(){
@@ -1150,16 +1156,16 @@ function showModUsuario(idx){
   else{document.getElementById('uu').value='';document.getElementById('up').value='';document.getElementById('unome').value='';document.getElementById('uperfil').value='gerente';}
   toggleFilialSelect();showMod('usuario');
 }
-function salvarUsuario(){
+async function salvarUsuario(){
   const idx=parseInt(document.getElementById('edit-user-idx').value);
   const u=document.getElementById('uu').value.trim(),p=document.getElementById('up').value.trim(),nome=document.getElementById('unome').value.trim(),perfil=document.getElementById('uperfil').value,filial=perfil==='coordenador'?document.getElementById('ufilial').value:null;
   if(!u||!nome){alert('Preencha usuário e nome.');return;}
-  if(idx<0){if(!p){alert('Informe a senha.');return;}if(usuarios.find(x=>x.u===u)){alert('Usuário já existe.');return;}usuarios.push({u,p,nome,perfil,filial});}
-  else{const usr=usuarios[idx];if(usuarios.find((x,i)=>x.u===u&&i!==idx)){alert('Usuário já existe.');return;}usr.u=u;usr.nome=nome;usr.perfil=perfil;usr.filial=filial;if(p)usr.p=p;}
+  if(idx<0){if(!p){alert('Informe a senha.');return;}if(usuarios.find(x=>x.u===u)){alert('Usuário já existe.');return;}const novo={u,p,nome,perfil,filial};const r=await sbFetch('/rest/v1/usuarios_app',{method:'POST',body:JSON.stringify({usuario:u,senha:p,nome,perfil,filial_id:filial})});if(r&&r[0])novo._id=r[0].id;usuarios.push(novo);}
+  else{const usr=usuarios[idx];if(usuarios.find((x,i)=>x.u===u&&i!==idx)){alert('Usuário já existe.');return;}usr.u=u;usr.nome=nome;usr.perfil=perfil;usr.filial=filial;if(p)usr.p=p;if(usr._id){const patch={usuario:u,nome,perfil,filial_id:filial};if(p)patch.senha=p;sbFetch(`/rest/v1/usuarios_app?id=eq.${usr._id}`,{method:'PATCH',body:JSON.stringify(patch)});}}
   hideMod('usuario');renderUsers();
 }
 function toggleFilialSelect(){document.getElementById('filial-row').style.display=document.getElementById('uperfil').value==='coordenador'?'block':'none';}
-function remUser(i){if(usuarios[i].u===currentUser.u){alert('Não pode remover seu próprio acesso.');return;}if(confirm(`Remover "${usuarios[i].nome}"?`)){usuarios.splice(i,1);renderUsers();}}
+function remUser(i){if(usuarios[i].u===currentUser.u){alert('Não pode remover seu próprio acesso.');return;}if(confirm(`Remover "${usuarios[i].nome}"?`)){const usr=usuarios[i];if(usr._id)sbFetch(`/rest/v1/usuarios_app?id=eq.${usr._id}`,{method:'DELETE'});usuarios.splice(i,1);renderUsers();}}
 
 // ── ADICIONAR ──
 function addTask(){const d=document.getElementById('td').value.trim();if(!d)return;const fid=currentFid;const sel=document.getElementById('tdep');const deps=[...sel.selectedOptions].map(o=>parseInt(o.value)).filter(v=>!isNaN(v));dados[fid].tarefas.push({d,dept:document.getElementById('tdept').value,s:document.getElementById('tst').value,o:document.getElementById('tob').value,inicio:document.getElementById('tinicio').value,prazo:parseInt(document.getElementById('tprazo').value)||7,deps});addH(currentUser.nome,'Adicionou tarefa "'+d+'"');hideMod('task');renderCron();}
