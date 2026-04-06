@@ -1160,9 +1160,21 @@ async function salvarUsuario(){
   const idx=parseInt(document.getElementById('edit-user-idx').value);
   const u=document.getElementById('uu').value.trim(),p=document.getElementById('up').value.trim(),nome=document.getElementById('unome').value.trim(),perfil=document.getElementById('uperfil').value,filial=perfil==='coordenador'?document.getElementById('ufilial').value:null;
   if(!u||!nome){alert('Preencha usuário e nome.');return;}
-  if(idx<0){if(!p){alert('Informe a senha.');return;}if(usuarios.find(x=>x.u===u)){alert('Usuário já existe.');return;}const novo={u,p,nome,perfil,filial};const r=await sbFetch('/rest/v1/usuarios_app',{method:'POST',body:JSON.stringify({usuario:u,senha:p,nome,perfil,filial_id:filial})});if(r&&r[0])novo._id=r[0].id;usuarios.push(novo);}
-  else{const usr=usuarios[idx];if(usuarios.find((x,i)=>x.u===u&&i!==idx)){alert('Usuário já existe.');return;}usr.u=u;usr.nome=nome;usr.perfil=perfil;usr.filial=filial;if(p)usr.p=p;if(usr._id){const patch={usuario:u,nome,perfil,filial_id:filial};if(p)patch.senha=p;sbFetch(`/rest/v1/usuarios_app?id=eq.${usr._id}`,{method:'PATCH',body:JSON.stringify(patch)});}}
-  hideMod('usuario');renderUsers();
+  if(idx<0){
+    if(!p){alert('Informe a senha.');return;}
+    if(usuarios.find(x=>x.u===u)){alert('Usuário já existe.');return;}
+    const r=await sbFetch('/rest/v1/usuarios_app',{method:'POST',body:JSON.stringify({usuario:u,senha:p,nome,perfil,filial_id:filial})});
+    if(r&&r[0]){const novo={u,p,nome,perfil,filial,_id:r[0].id};usuarios.push(novo);}
+  } else {
+    const usr=usuarios[idx];
+    if(usuarios.find((x,i)=>x.u===u&&i!==idx)){alert('Usuário já existe.');return;}
+    usr.u=u;usr.nome=nome;usr.perfil=perfil;usr.filial=filial;if(p)usr.p=p;
+    const patch={usuario:u,nome,perfil,filial_id:filial};if(p)patch.senha=p;
+    await sbFetch(`/rest/v1/usuarios_app?id=eq.${usr._id}`,{method:'PATCH',body:JSON.stringify(patch)});
+  }
+  hideMod('usuario');
+  await carregarTodosDados();
+  renderUsers();
 }
 function toggleFilialSelect(){document.getElementById('filial-row').style.display=document.getElementById('uperfil').value==='coordenador'?'block':'none';}
 function remUser(i){if(usuarios[i].u===currentUser.u){alert('Não pode remover seu próprio acesso.');return;}if(confirm(`Remover "${usuarios[i].nome}"?`)){const usr=usuarios[i];if(usr._id)sbFetch(`/rest/v1/usuarios_app?id=eq.${usr._id}`,{method:'DELETE'});usuarios.splice(i,1);renderUsers();}}
