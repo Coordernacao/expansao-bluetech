@@ -908,11 +908,12 @@ function renderCron(data){
   updCronPct();rChk();buildSidebarFiliais();calcNotifs();
 }
 
-function updCronInicio(ri,val,fid){dados[fid].tarefas[ri].inicio=val;propagarInicio(fid,ri,val);renderCron();}
+function updCronInicio(ri,val,fid){dados[fid].tarefas[ri].inicio=val;propagarInicio(fid,ri,val);renderCron();const t=dados[fid].tarefas[ri];if(t._id)sbFetch(`/rest/v1/tarefas?id=eq.${t._id}`,{method:'PATCH',body:JSON.stringify({inicio:val})});}
 function updCron(ri,val){
   const fid=currentFid,old=dados[fid].tarefas[ri].s;
   if(val==='ATRASO'&&old==='FINALIZADO')return;
   dados[fid].tarefas[ri].s=val;addH(currentUser.nome,`"${dados[fid].tarefas[ri].d}": ${old} → ${val}`);
+  const t=dados[fid].tarefas[ri];if(t._id)sbFetch(`/rest/v1/tarefas?id=eq.${t._id}`,{method:'PATCH',body:JSON.stringify({status:val})});
   renderCron();renderDash();calcNotifs();
 }
 function delTarefa(ri,fid){if(!confirm(`Excluir "${dados[fid].tarefas[ri].d}"?`))return;dados[fid].tarefas.splice(ri,1);addH(currentUser.nome,'Excluiu tarefa');renderCron();}
@@ -989,13 +990,14 @@ function delItemComp(ri,fid){if(!confirm(`Excluir "${dados[fid].compras[ri].i}"?
 function updCS(ri,fid,val){
   const old=dados[fid].compras[ri].ss;dados[fid].compras[ri].ss=val;
   addH(currentUser.nome,`Status de "${dados[fid].compras[ri].i}": ${old} → ${val}`);
+  const c=dados[fid].compras[ri];if(c._id)sbFetch(`/rest/v1/compras?id=eq.${c._id}`,{method:'PATCH',body:JSON.stringify({status_sol:val})});
   const foCell=document.getElementById(`fo-${ri}`);
   if(foCell){const isT=val==='TRANSFERÊNCIA';const foOpts=filiaisAtivas.map(f=>`<option value="${f.id}"${f.id===dados[fid].compras[ri].fo?' selected':''}>${f.nome}</option>`).join('');foCell.innerHTML=isT?`<select class="es" style="width:125px" onchange="dados['${fid}'].compras[${ri}].fo=this.value"><option value="">Selecionar...</option>${foOpts}</select>`:'<span style="color:var(--text3);font-size:10px">—</span>';}
   updTotais();updFin();calcNotifs();
 }
 function edt(val,f,ri,fid){return`<span class="ed" onclick="se(this,'${f}',${ri},'${fid}')">${val||'<span style="color:var(--text3)">—</span>'}</span>`;}
 function se(el,f,ri,fid){if(ae)ce();ae={el,f,ri,fid};el.innerHTML=`<input class="ei" value="${dados[fid].compras[ri][f]||''}" style="min-width:70px" onblur="ce()" onkeydown="if(event.key==='Enter')ce();if(event.key==='Escape')xe()">`;el.querySelector('input').focus();}
-function ce(){if(!ae)return;const{el,f,ri,fid}=ae;const inp=el.querySelector('input');if(inp){const old=dados[fid].compras[ri][f],val=inp.value;dados[fid].compras[ri][f]=val;if(val!==old)addH(currentUser.nome,`Editou "${f}" de "${dados[fid].compras[ri].i}"`);el.innerHTML=val||'<span style="color:var(--text3)">—</span>';updTotais();updFin();}ae=null;}
+function ce(){if(!ae)return;const{el,f,ri,fid}=ae;const inp=el.querySelector('input');if(inp){const old=dados[fid].compras[ri][f],val=inp.value;dados[fid].compras[ri][f]=val;if(val!==old){addH(currentUser.nome,`Editou "${f}" de "${dados[fid].compras[ri].i}"`);const c=dados[fid].compras[ri];if(c._id)sbFetch(`/rest/v1/compras?id=eq.${c._id}`,{method:'PATCH',body:JSON.stringify({[f]:val})});}el.innerHTML=val||'<span style="color:var(--text3)">—</span>';updTotais();updFin();}ae=null;}
 function xe(){if(!ae)return;const{el,f,ri,fid}=ae;el.innerHTML=dados[fid].compras[ri][f]||'<span style="color:var(--text3)">—</span>';ae=null;}
 function updTotais(){const c=dados[currentFid]?.compras||[];const tot=c.reduce((s,x)=>s+pv(x.v)*pv(x.q),0);const eg=document.getElementById('cg'),et=document.getElementById('ct');if(eg)eg.textContent=fmt(tot)||'—';if(et)et.textContent=fmt(tot)||'—';}
 
@@ -1012,7 +1014,7 @@ function updFin(){
   const byCat={};c.forEach(x=>{if(!byCat[x.cat])byCat[x.cat]={n:0,v:0};byCat[x.cat].n++;byCat[x.cat].v+=pv(x.v)*pv(x.q);});
   if(e('fcat'))e('fcat').innerHTML=Object.entries(byCat).sort((a,b)=>b[1].v-a[1].v).map(([cat,d])=>{const p=gasto>0?Math.round(d.v/gasto*100):0;return`<tr><td><span class="tag">${cat}</span></td><td style="color:var(--text2)">${d.n}</td><td style="color:var(--blue);font-weight:600">${fmt(d.v)||'—'}</td><td><div style="display:flex;align-items:center;gap:8px"><div class="pb" style="width:80px"><div class="pf" style="width:${p}%;background:var(--blue)"></div></div><span style="color:var(--text2);font-size:11px">${p}%</span></div></td></tr>`;}).join('');
 }
-function updOrc(){const fid=currentFid,v=parseFloat((document.getElementById('finp').value||'').replace(',','.'));if(!isNaN(v)&&v>0){const fil=filiaisAbertura.find(f=>f.id===fid);if(fil)fil.orc=v;addH(currentUser.nome,'Orçamento → '+fmt(v));document.getElementById('finp').value='';updFin();}}
+function updOrc(){const fid=currentFid,v=parseFloat((document.getElementById('finp').value||'').replace(',','.'));if(!isNaN(v)&&v>0){const fil=filiaisAbertura.find(f=>f.id===fid);if(fil){fil.orc=v;sbFetch(`/rest/v1/filiais?id=eq.${fid}`,{method:'PATCH',body:JSON.stringify({orc:v})});}addH(currentUser.nome,'Orçamento → '+fmt(v));document.getElementById('finp').value='';updFin();}}
 
 // ── HISTÓRICO ──
 function addH(u,a){if(!currentFid)return;const n=new Date();const ts=n.toLocaleDateString('pt-BR')+' '+n.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});dados[currentFid].hist.unshift({ts,u,a});rHist();}
