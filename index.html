@@ -1164,7 +1164,9 @@ async function salvarUsuario(){
     if(!p){alert('Informe a senha.');return;}
     if(usuarios.find(x=>x.u===u)){alert('Usuário já existe.');return;}
     const r=await sbFetch('/rest/v1/usuarios_app',{method:'POST',body:JSON.stringify({usuario:u,senha:p,nome,perfil,filial_id:filial})});
-    if(r&&r[0]){const novo={u,p,nome,perfil,filial,_id:r[0].id};usuarios.push(novo);}
+    console.log('[salvarUsuario] retorno POST:', r);
+    if(!r||!r[0]){alert('Erro ao criar usuário. Verifique o console para detalhes.');return;}
+    const novo={u,p,nome,perfil,filial,_id:r[0].id};usuarios.push(novo);
   } else {
     const usr=usuarios[idx];
     if(usuarios.find((x,i)=>x.u===u&&i!==idx)){alert('Usuário já existe.');return;}
