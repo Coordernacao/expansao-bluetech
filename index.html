@@ -245,7 +245,7 @@ input[type=date],input[type=month]{color-scheme:dark}
   </div>
   <div style="display:flex;gap:6px">
     <button class="btn" id="btn-add-task" onclick="showMod('task')">+ Tarefa</button>
-    <button class="btn" onclick="showMod('item')">+ Compra</button>
+    <button class="btn" onclick="showModItem()">+ Compra</button>
     <button class="btn btp" onclick="showTab('rel')">↗ Relatório</button>
     <button class="btn" id="btn-edit-fil" onclick="showModEditFilial()" style="display:none" title="Editar filial">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -308,7 +308,7 @@ input[type=date],input[type=month]{color-scheme:dark}
     <div id="cron-alert" class="alert-bar hidden">⚠ Existem tarefas em atraso!</div>
     <div class="card" style="padding:0;overflow:hidden;overflow-x:auto">
       <table style="min-width:920px">
-        <thead><tr><th style="width:26%">Descrição</th><th>Depto</th><th>Paralela com</th><th>Status</th><th>Início</th><th>Prazo</th><th>Prev. entrega</th><th>Situação</th><th>Obs.</th><th id="th-del-cron" style="display:none"></th></tr></thead>
+        <thead><tr><th style="width:28px;text-align:center">#</th><th style="width:26%">Descrição</th><th>Depto</th><th>Paralela com</th><th>Status</th><th>Início</th><th>Prazo</th><th>Prev. entrega</th><th>Situação</th><th>Obs.</th><th id="th-del-cron" style="display:none"></th></tr></thead>
         <tbody id="cron-body"></tbody>
       </table>
     </div>
@@ -465,7 +465,7 @@ input[type=date],input[type=month]{color-scheme:dark}
     <div class="fr"><label>Categoria</label><select id="ic"><option>COZINHA</option><option>ESTOQUE</option><option>MATERIAL ESTOQUE</option><option>PAPELARIA</option><option>LIMPEZA</option><option>REFEITORIO</option><option>LOGISTICA</option><option>ESTRUTURAL</option><option>SEGURANÇA</option><option>REDE</option><option>MONTAGEM ESTRUTURA</option></select></div>
     <div class="fr"><label>Quantidade</label><input type="number" id="iq" placeholder="1" min="1"></div>
     <div class="fr"><label>Valor unitário (R$)</label><input type="text" id="iv"></div>
-    <div class="fr"><label>Solicitante</label><input type="text" id="is"></div>
+    <div class="fr"><label>Solicitante</label><select id="is" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:var(--bg3);color:var(--text)"></select></div>
     <div class="fr"><label>Status</label><select id="ist" onchange="toggleFOModal()"><option>AGUARDANDO COMPRA</option><option>EM ANDAMENTO</option><option>TRANSFERÊNCIA</option><option>COMPRA REALIZADA</option><option>COMPRA PARALISADA</option><option>FINALIZADO</option></select></div>
     <div class="fr" style="grid-column:1/-1" id="fo-modal-row"><label>Filial de origem</label><select id="ifo" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:var(--bg3);color:var(--text)"></select></div>
     <div class="fr"><label>Data da compra</label><input type="date" id="idc" min="2025-01-01" style="color-scheme:dark"></div>
@@ -867,13 +867,15 @@ function renderCron(data){
   document.getElementById('cron-alert').classList.toggle('hidden',!at);
   const thDel=document.getElementById('th-del-cron');if(thDel)thDel.style.display=isG?'table-cell':'none';
 
+  const CRON_BG={'NÃO INICIADO':'rgba(139,144,168,.07)','EM ANDAMENTO':'rgba(79,142,247,.1)','FINALIZADO':'rgba(54,201,142,.09)','ATRASO':'rgba(245,88,88,.12)'};
   document.getElementById('cron-body').innerHTML=data.map(t=>{
     const ri=tarefas.indexOf(t),ep=calcPrev(tarefas,ri),dias=ep?diasDiff(ep):null;
     const dc=dias===null?'var(--text3)':dias<0?'var(--red)':dias<=3?'var(--amber)':'var(--green)';
     const dt=dias===null?'—':dias<0?`Atraso ${Math.abs(dias)}d`:dias===0?'Vence hoje':`${dias}d`;
     const pars=t.deps&&t.deps.length?t.deps.map(d=>`<span style="font-size:9px;background:rgba(79,142,247,.1);color:var(--blue);padding:1px 5px;border-radius:4px;margin-right:2px">${tarefas[d]?.d?.substring(0,12)||d}...</span>`).join(''):'<span style="color:var(--text3);font-size:10px">—</span>';
     const sopts=SCRON.map(o=>`<option${o===t.s?' selected':''}>${o}</option>`).join('');
-    return`<tr style="opacity:${t.s==='FINALIZADO'?.6:1}">
+    return`<tr style="background:${CRON_BG[t.s]||'transparent'};opacity:${t.s==='FINALIZADO'?.75:1}">
+    <td style="color:var(--text3);font-size:11px;text-align:center;font-weight:600">${ri+1}</td>
     <td style="font-size:12px">${t.d}</td>
     <td>${deptTag(t.dept)}</td>
     <td style="max-width:130px">${pars}</td>
@@ -938,20 +940,23 @@ function renderComp(data){
 
     const tbl=document.createElement('table');
     tbl.style.minWidth='1050px';
-    tbl.innerHTML=`<thead><tr><th>Item</th><th>Qtd</th><th>Status</th><th>Filial origem</th><th>Solicitante</th><th>Dt. Compra</th><th>Prev. Entrega</th><th>Situação</th><th>Valor unit.</th><th>Total</th><th>Obs.</th>${isG?'<th></th>':''}</tr></thead>
+    const COMP_BG={'AGUARDANDO COMPRA':'rgba(139,144,168,.07)','EM ANDAMENTO':'rgba(79,142,247,.1)','TRANSFERÊNCIA':'rgba(155,111,247,.1)','COMPRA REALIZADA':'rgba(54,201,142,.08)','COMPRA PARALISADA':'rgba(245,88,88,.12)','FINALIZADO':'rgba(54,201,142,.14)'};
+    const solOpts=usuarios.map(u=>`<option value="${u.nome}">${u.nome}</option>`).join('');
+    tbl.innerHTML=`<thead><tr><th>Item</th><th>Qtd</th><th>Status</th><th>Filial origem</th><th>Solicitante</th><th>Dt. Compra</th><th style="color:var(--blue)">Prev. Entrega</th><th>Situação</th><th>Valor unit.</th><th>Total</th><th>Obs.</th>${isG?'<th></th>':''}</tr></thead>
     <tbody>${itens.map(c=>{
       const ri=allComps.indexOf(c);
       const tot=pv(c.v)*pv(c.q);
       const foOpts=filiaisAtivas.map(f=>`<option value="${f.id}"${f.id===c.fo?' selected':''}>${f.nome}</option>`).join('');
       const isT=c.ss==='TRANSFERÊNCIA';
-      return`<tr>
+      const deAtrasada=c.de&&c.ss!=='FINALIZADO'&&diasDiff(c.de)<0;
+      return`<tr style="background:${COMP_BG[c.ss]||'transparent'}">
       <td style="max-width:180px;font-size:12px">${edt(c.i,'i',ri,fid)}</td>
       <td style="text-align:center">${edt(c.q,'q',ri,fid)}</td>
       <td><select class="es" style="width:155px" onchange="updCS(${ri},'${fid}',this.value)">${SSEL.map(o=>`<option${o===c.ss?' selected':''}>${o}</option>`).join('')}</select></td>
       <td id="fo-${ri}">${isT?`<select class="es" style="width:125px" onchange="dados['${fid}'].compras[${ri}].fo=this.value"><option value="">Selecionar...</option>${foOpts}</select>`:'<span style="color:var(--text3);font-size:10px">—</span>'}</td>
-      <td>${edt(c.sol,'sol',ri,fid)}</td>
+      <td><select class="es" style="width:130px" onchange="dados['${fid}'].compras[${ri}].sol=this.value"><option value="">—</option>${solOpts.replace(`value="${c.sol}"`,`value="${c.sol}" selected`)}</select></td>
       <td><input class="ei" type="date" value="${c.dc||''}" min="2025-01-01" style="width:120px;color-scheme:${isDark?'dark':'light'}" onchange="dados['${fid}'].compras[${ri}].dc=this.value"></td>
-      <td><input class="ei" type="date" value="${c.de||''}" min="2025-01-01" style="width:120px;color-scheme:${isDark?'dark':'light'}" onchange="dados['${fid}'].compras[${ri}].de=this.value;renderComp()"></td>
+      <td><input class="ei" type="date" value="${c.de||''}" min="2025-01-01" style="width:120px;color-scheme:${isDark?'dark':'light'};${deAtrasada?'border-color:var(--red);color:var(--red);font-weight:600':''}" onchange="dados['${fid}'].compras[${ri}].de=this.value;renderComp()"></td>
       <td>${situacaoBadge(c.de,c.ss)}</td>
       <td><span class="ed" onclick="se(this,'v',${ri},'${fid}')" style="color:${c.v?'var(--blue)':'var(--text3)'}">${c.v?fmt(pv(c.v)):'+valor'}</span></td>
       <td style="font-size:11px;color:var(--text2)">${tot>0?fmt(tot):'—'}</td>
@@ -1165,6 +1170,7 @@ function remUser(i){if(usuarios[i].u===currentUser.u){alert('Não pode remover s
 // ── ADICIONAR ──
 function addTask(){const d=document.getElementById('td').value.trim();if(!d)return;const fid=currentFid;const sel=document.getElementById('tdep');const deps=[...sel.selectedOptions].map(o=>parseInt(o.value)).filter(v=>!isNaN(v));dados[fid].tarefas.push({d,dept:document.getElementById('tdept').value,s:document.getElementById('tst').value,o:document.getElementById('tob').value,inicio:document.getElementById('tinicio').value,prazo:parseInt(document.getElementById('tprazo').value)||7,deps});addH(currentUser.nome,'Adicionou tarefa "'+d+'"');hideMod('task');renderCron();}
 function toggleFOModal(){document.getElementById('fo-modal-row').style.display=document.getElementById('ist').value==='TRANSFERÊNCIA'?'block':'none';}
+function showModItem(){const sel=document.getElementById('is');sel.innerHTML='<option value="">—</option>'+usuarios.map(u=>`<option value="${u.nome}">${u.nome}</option>`).join('');showMod('item');}
 function addItem(){const i=document.getElementById('ii').value.trim();if(!i)return;const fid=currentFid;dados[fid].compras.push({cat:document.getElementById('ic').value,i,q:parseInt(document.getElementById('iq').value)||1,ss:document.getElementById('ist').value,sol:document.getElementById('is').value,fo:document.getElementById('ifo').value,dc:document.getElementById('idc').value,de:document.getElementById('ide').value,v:document.getElementById('iv').value,o:document.getElementById('io').value});addH(currentUser.nome,'Adicionou item "'+i+'"');hideMod('item');renderComp();updFin();}
 async function criarFilial() {
   const nome = document.getElementById('nf-nome').value.trim(); if (!nome) return;
