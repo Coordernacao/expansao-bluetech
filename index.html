@@ -532,24 +532,9 @@ const DEPT_COLORS={COMERCIAL:'#4f8ef7',OPERACIONAL:'#2dd4bf',CONTABILIDADE:'#f5a
 let ocultarValores=false,currentUser=null,currentFid=null,chkFiltro='',ae=null,sidebarMini=false,notifOpen=false,isDark=true;
 let collapsedCats={};
 
-let usuarios=[
-  {u:'gerente',p:'1234',nome:'Gerente',perfil:'gerente',filial:null},
-  {u:'murilo',p:'1234',nome:'Murilo',perfil:'coordenador',filial:'palhoca'},
-  {u:'debora',p:'1234',nome:'Débora',perfil:'coordenador',filial:'cotia'},
-  {u:'compras',p:'1234',nome:'Time Compras',perfil:'compras',filial:null},
-];
-let filiaisAbertura=[
-  {id:'palhoca',nome:'Palhoça',uf:'SC',resp:'Murilo',respUser:'murilo',orc:60000,cor:'#4f8ef7',prevAbertura:'2026-06'},
-  {id:'cotia',nome:'Cotia',uf:'SP',resp:'Débora',respUser:'debora',orc:60000,cor:'#f5a623',prevAbertura:'2026-07'},
-  {id:'sg',nome:'São Gonçalo',uf:'RJ',resp:'Guilherme',respUser:'',orc:60000,cor:'#36c98e',prevAbertura:'2026-08'},
-];
-let filiaisAtivas=[
-  {id:'fa1',nome:'FILIAL UDI',cidade:'Uberlândia',uf:'MG',cod:'001'},
-  {id:'fa2',nome:'FILIAL BSB',cidade:'Brasília',uf:'DF',cod:'002'},
-  {id:'fa3',nome:'CD GO',cidade:'Goiânia',uf:'GO',cod:'003'},
-  {id:'fa4',nome:'BK SP',cidade:'São Paulo',uf:'SP',cod:'004'},
-  {id:'fa5',nome:'FILIAL RJ',cidade:'Rio de Janeiro',uf:'RJ',cod:'005'},
-];
+let usuarios=[];
+let filiaisAbertura=[];
+let filiaisAtivas=[];
 
 let catalogoItens=[
   {cat:'COZINHA',nome:'GELADEIRA BRASTEMP FROST FREE DUPLEX 375L COMPARTIMENTO EXTRAFRIO - BRM44HK',qtd:1,obs:'Validar voltagem'},
@@ -654,13 +639,7 @@ let cronPadrao=[
   {d:'Parametrização da Tabela de Preço',dept:'COMERCIAL',prazo:2,deps:[24]},
 ];
 
-let dados={
-  palhoca:{hist:[{ts:'02/04/2026 14:32',u:'Murilo',a:'Status "Envio da Segunda Carga" → EM ANDAMENTO'}],
-    tarefas:cronPadrao.map((t,i)=>({...t,s:i<10?'FINALIZADO':i<12?'EM ANDAMENTO':'NÃO INICIADO',o:'',inicio:i===0?'2026-03-01':''})),
-    compras:catalogoItens.map(c=>({cat:c.cat,i:c.nome,q:c.qtd,ss:'AGUARDANDO COMPRA',sol:'',fo:'',dc:'',de:'',v:'',o:c.obs||''}))},
-  cotia:{hist:[],tarefas:cronPadrao.map(t=>({...t,s:'NÃO INICIADO',o:'',inicio:''})),compras:catalogoItens.map(c=>({cat:c.cat,i:c.nome,q:c.qtd,ss:'AGUARDANDO COMPRA',sol:'',fo:'',dc:'',de:'',v:'',o:c.obs||''}))},
-  sg:{hist:[],tarefas:cronPadrao.map(t=>({...t,s:'NÃO INICIADO',o:'',inicio:''})),compras:catalogoItens.map(c=>({cat:c.cat,i:c.nome,q:c.qtd,ss:'AGUARDANDO COMPRA',sol:'',fo:'',dc:'',de:'',v:'',o:c.obs||''}))},
-};
+let dados={};
 
 // ── UTILS ──
 function fmt(v){const n=parseFloat(String(v||0).replace(/[^\d,.]/g,'').replace(',','.'));if(isNaN(n)||n===0)return'—';return'R$ '+n.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');}
@@ -764,11 +743,12 @@ function doLogout(){currentUser=null;currentFid=null;document.getElementById('ma
 function getCoords(){return usuarios.filter(u=>u.perfil==='coordenador');}
 
 async function carregarTodosDados() {
-  const [filDb, tarDb, compDb, usrDb] = await Promise.all([
+  const [filDb, tarDb, compDb, usrDb, faDb] = await Promise.all([
     sbFetch('/rest/v1/filiais?select=*'),
     sbFetch('/rest/v1/tarefas?select=*'),
     sbFetch('/rest/v1/compras?select=*'),
-    sbFetch('/rest/v1/usuarios_app?select=*')
+    sbFetch('/rest/v1/usuarios_app?select=*'),
+    sbFetch('/rest/v1/filiais_ativas?select=*')
   ]);
 
   filiaisAbertura = (filDb||[]).map(f => ({
@@ -796,6 +776,10 @@ async function carregarTodosDados() {
   usuarios = (usrDb||[]).map(u => ({
     u: u.usuario, p: u.senha, nome: u.nome,
     perfil: u.perfil, filial: Array.isArray(u.filial_id)?u.filial_id:(u.filial_id?[u.filial_id]:[]), _id: u.id
+  }));
+
+  filiaisAtivas = (faDb||[]).map(f => ({
+    id: f.id, nome: f.nome, cidade: f.cidade||'', uf: f.uf||'', cod: f.cod||'', _id: f.id
   }));
 }
 
