@@ -466,7 +466,7 @@ input[type=date],input[type=month]{color-scheme:dark}
     <div class="fr"><label>Quantidade</label><input type="number" id="iq" placeholder="1" min="1"></div>
     <div class="fr"><label>Valor unitário (R$)</label><input type="text" id="iv"></div>
     <div class="fr"><label>Solicitante</label><select id="is" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:var(--bg3);color:var(--text)"></select></div>
-    <div class="fr"><label>Status</label><select id="ist" onchange="toggleFOModal()"><option>AGUARDANDO COMPRA</option><option>EM ANDAMENTO</option><option>TRANSFERÊNCIA</option><option>COMPRA REALIZADA</option><option>COMPRA PARALISADA</option><option>FINALIZADO</option></select></div>
+    <div class="fr"><label>Status</label><select id="ist" onchange="toggleFOModal()"><option>PENDENTE</option><option>AGUARDANDO COMPRA</option><option>EM ANDAMENTO</option><option>TRANSFERÊNCIA</option><option>COMPRA REALIZADA</option><option>COMPRA PARALISADA</option><option>FINALIZADO</option></select></div>
     <div class="fr" style="grid-column:1/-1" id="fo-modal-row"><label>Filial de origem</label><select id="ifo" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:var(--bg3);color:var(--text)"></select></div>
     <div class="fr"><label>Data da compra</label><input type="date" id="idc" min="2025-01-01" style="color-scheme:dark"></div>
     <div class="fr"><label>Previsão de entrega</label><input type="date" id="ide" min="2025-01-01" style="color-scheme:dark"></div>
@@ -522,9 +522,9 @@ input[type=date],input[type=month]{color-scheme:dark}
 </div></div>
 
 <script>
-const SSEL=['AGUARDANDO COMPRA','EM ANDAMENTO','TRANSFERÊNCIA','COMPRA REALIZADA','COMPRA PARALISADA','FINALIZADO'];
+const SSEL=['PENDENTE','AGUARDANDO COMPRA','EM ANDAMENTO','TRANSFERÊNCIA','COMPRA REALIZADA','COMPRA PARALISADA','FINALIZADO'];
 const SCRON=['NÃO INICIADO','EM ANDAMENTO','FINALIZADO','ATRASO'];
-const COMP_BG={'AGUARDANDO COMPRA':'rgba(139,144,168,0.25)','EM ANDAMENTO':'rgba(79,142,247,0.25)','TRANSFERÊNCIA':'rgba(155,111,247,0.25)','COMPRA REALIZADA':'rgba(45,212,191,0.25)','COMPRA PARALISADA':'rgba(255,88,88,0.25)','FINALIZADO':'rgba(54,201,142,0.25)'};
+const COMP_BG={'PENDENTE':'rgba(245,166,35,0.25)','AGUARDANDO COMPRA':'rgba(139,144,168,0.25)','EM ANDAMENTO':'rgba(79,142,247,0.25)','TRANSFERÊNCIA':'rgba(155,111,247,0.25)','COMPRA REALIZADA':'rgba(45,212,191,0.25)','COMPRA PARALISADA':'rgba(255,88,88,0.25)','FINALIZADO':'rgba(54,201,142,0.25)'};
 const CRON_BG={'NÃO INICIADO':'rgba(139,144,168,.07)','EM ANDAMENTO':'rgba(79,142,247,.1)','FINALIZADO':'rgba(54,201,142,.1)','ATRASO':'rgba(245,88,88,.12)'};
 const ALL_CATS=['COZINHA','ESTOQUE','MATERIAL ESTOQUE','PAPELARIA','LIMPEZA','REFEITORIO','LOGISTICA','ESTRUTURAL','SEGURANÇA','REDE','MONTAGEM ESTRUTURA'];
 const ALL_DEPTS=['COMERCIAL','OPERACIONAL','CONTABILIDADE','FINANCEIRO','COMPRAS','RECRUTAMENTO','SUPORTE'];
@@ -949,7 +949,7 @@ function renderComp(data){
     const tbl=document.createElement('table');
     tbl.style.minWidth='1050px';
     const solOpts=usuarios.map(u=>`<option value="${u.nome}">${u.nome}</option>`).join('');
-    tbl.innerHTML=`<thead><tr><th>Item</th><th>Qtd</th><th>Status</th><th>Filial origem</th><th>Solicitante</th><th>Dt. Compra</th><th style="color:var(--blue)">Prev. Entrega</th><th>Situação</th><th>Valor unit.</th><th>Total</th><th>Obs.</th>${isG?'<th></th>':''}</tr></thead>
+    tbl.innerHTML=`<thead><tr><th>Item</th><th>Qtd</th><th>Status</th><th>Filial origem</th><th>Solicitante</th><th>Dt. Compra</th><th style="color:var(--blue)">Prev. Entrega</th><th>Valor unit.</th><th>Total</th><th>Obs.</th>${isG?'<th></th>':''}</tr></thead>
     <tbody>${itens.map(c=>{
       const ri=allComps.indexOf(c);
       const tot=pv(c.v)*pv(c.q);
@@ -964,7 +964,6 @@ function renderComp(data){
       <td><select class="es" style="width:130px" onchange="dados['${fid}'].compras[${ri}].sol=this.value"><option value="">—</option>${solOpts.replace(`value="${c.sol}"`,`value="${c.sol}" selected`)}</select></td>
       <td><input class="ei" type="date" value="${c.dc||''}" min="2025-01-01" style="width:120px;color-scheme:${isDark?'dark':'light'}" onchange="dados['${fid}'].compras[${ri}].dc=this.value"></td>
       <td><input class="ei" type="date" value="${c.de||''}" min="2025-01-01" style="width:120px;color-scheme:${isDark?'dark':'light'};${deAtrasada?'border-color:var(--red);color:var(--red);font-weight:600':''}" onchange="dados['${fid}'].compras[${ri}].de=this.value;renderComp()"></td>
-      <td>${situacaoBadge(c.de,c.ss)}</td>
       <td><span class="ed" onclick="se(this,'v',${ri},'${fid}')" style="color:${c.v?'var(--blue)':'var(--text3)'}">${c.v?fmt(pv(c.v)):'+valor'}</span></td>
       <td style="font-size:11px;color:var(--text2)">${tot>0?fmt(tot):'—'}</td>
       <td style="max-width:100px">${edt(c.o,'o',ri,fid)}</td>
@@ -1114,10 +1113,11 @@ async function salvarCronPadrao(){
   const dept=document.getElementById('cp-dept').value,prazo=parseInt(document.getElementById('cp-prazo').value)||7,ordem=parseInt(document.getElementById('cp-ordem').value)||cronPadrao.length+1;
   if(idx>=0){cronPadrao[idx]={...cronPadrao[idx],d,dept,prazo,deps,ordem};const t=cronPadrao[idx];if(t._id)sbFetch(`/rest/v1/cron_padrao?id=eq.${t._id}`,{method:'PATCH',body:JSON.stringify({descricao:d,dept,prazo,deps,ordem})});}
   else{const novo={d,dept,prazo,deps,ordem};const r=await sbFetch('/rest/v1/cron_padrao',{method:'POST',body:JSON.stringify({descricao:d,dept,prazo,deps,ordem})});if(r&&r[0])novo._id=r[0].id;cronPadrao.push(novo);}
-  hideMod('cron-padrao');renderCronPadrao();
+  replicarCronParaFiliais();hideMod('cron-padrao');renderCronPadrao();
 }
 function delCronPadrao(i){if(!confirm('Excluir?'))return;const t=cronPadrao[i];if(t._id)sbFetch(`/rest/v1/cron_padrao?id=eq.${t._id}`,{method:'DELETE'});cronPadrao.splice(i,1);renderCronPadrao();}
-function updCronOrdem(ri,val){cronPadrao[ri].ordem=val;const t=cronPadrao[ri];if(t._id)sbFetch(`/rest/v1/cron_padrao?id=eq.${t._id}`,{method:'PATCH',body:JSON.stringify({ordem:val})});renderCronPadrao();}
+function updCronOrdem(ri,val){cronPadrao[ri].ordem=val;const t=cronPadrao[ri];if(t._id)sbFetch(`/rest/v1/cron_padrao?id=eq.${t._id}`,{method:'PATCH',body:JSON.stringify({ordem:val})});replicarCronParaFiliais();renderCronPadrao();}
+function replicarCronParaFiliais(){filiaisAbertura.forEach(f=>{const tarefas=dados[f.id]?.tarefas||[];tarefas.forEach(t=>{if(t.s!=='NÃO INICIADO')return;const cp=cronPadrao.find(c=>c.d===t.d);if(!cp)return;t.dept=cp.dept;t.prazo=cp.prazo;t.deps=cp.deps;t.ordem=cp.ordem;});});}
 
 // ── FILIAIS ATIVAS ──
 function renderFiliaisAtivas(){
