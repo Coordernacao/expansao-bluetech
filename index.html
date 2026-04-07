@@ -1194,12 +1194,15 @@ async function criarFilial() {
   await sbFetch('/rest/v1/filiais', { method: 'POST', body: JSON.stringify({ id, nome, uf: fil.uf, resp: respNome, resp_user: respUser, orc, cor, prev_abertura: prev }) });
   filiaisAbertura.push(fil);
   if (respUser) { const coord = usuarios.find(u=>u.u===respUser); if(coord) { coord.filial=id; await sbFetch(`/rest/v1/usuarios_app?id=eq.${coord._id}`, {method:'PATCH', body: JSON.stringify({filial_id: id})}); } }
-  dados[id] = { hist: [], tarefas: cronPadrao.map(t=>({...t,s:'NÃO INICIADO',o:'',inicio:''})), compras: catalogoItens.map(c=>({cat:c.cat,i:c.nome,q:c.qtd,ss:'AGUARDANDO COMPRA',sol:'',fo:'',dc:'',de:'',v:'',o:c.obs||''})) };
-  for (const t of dados[id].tarefas) { const r = await sbFetch('/rest/v1/tarefas', {method:'POST', body: JSON.stringify({filial_id:id,descricao:t.d,dept:t.dept,status:t.s,prazo:t.prazo,deps:t.deps,obs:''})}); if(r&&r[0]) t._id=r[0].id; }
-  for (const c of dados[id].compras) { const r = await sbFetch('/rest/v1/compras', {method:'POST', body: JSON.stringify({filial_id:id,categoria:c.cat,item:c.i,quantidade:c.q,status_sol:c.ss,valor:0})}); if(r&&r[0]) c._id=r[0].id; }
+  const tarefasBase = cronPadrao.map(t=>({...t,s:'NÃO INICIADO',o:'',inicio:'',_id:null}));
+  const comprasBase = catalogoItens.map(c=>({cat:c.cat,i:c.nome,q:c.qtd,ss:'AGUARDANDO COMPRA',sol:'',fo:'',dc:'',de:'',v:'',o:c.obs||'',_id:null}));
+  for (const t of tarefasBase) { const r = await sbFetch('/rest/v1/tarefas', {method:'POST', body: JSON.stringify({filial_id:id,descricao:t.d,dept:t.dept,status:t.s,prazo:t.prazo,deps:t.deps,obs:''})}); if(r&&r[0]) t._id=r[0].id; }
+  for (const c of comprasBase) { const r = await sbFetch('/rest/v1/compras', {method:'POST', body: JSON.stringify({filial_id:id,categoria:c.cat,item:c.i,quantidade:c.q,status_sol:c.ss,valor:0})}); if(r&&r[0]) c._id=r[0].id; }
+  dados[id] = { hist: [], tarefas: tarefasBase, compras: comprasBase };
+  await carregarTodosDados();
   buildSidebarFiliais(); renderDash(); hideMod('nova');
 }
-function excluirFilialAtual(){if(!confirm('Excluir esta filial e todos os dados?'))return;filiaisAbertura=filiaisAbertura.filter(f=>f.id!==currentFid);delete dados[currentFid];currentFid=null;buildSidebarFiliais();voltarDash();}
+async function excluirFilialAtual(){if(!confirm('Excluir esta filial e todos os dados?'))return;const fid=currentFid;await sbFetch('/rest/v1/tarefas?filial_id=eq.'+fid,{method:'DELETE'});await sbFetch('/rest/v1/compras?filial_id=eq.'+fid,{method:'DELETE'});await sbFetch('/rest/v1/filiais?id=eq.'+fid,{method:'DELETE'});filiaisAbertura=filiaisAbertura.filter(f=>f.id!==fid);delete dados[fid];currentFid=null;buildSidebarFiliais();voltarDash();}
 
 // ── NAVEGAÇÃO ──
 function voltarDash(){
