@@ -167,6 +167,82 @@ input[type=date],input[type=month]{color-scheme:dark}
 .search-box{display:flex;align-items:center;gap:6px;padding:5px 10px;border:1px solid var(--border);border-radius:7px;background:var(--bg3)}
 .search-box input{border:none;background:transparent;color:var(--text);font-size:12px;outline:none;width:160px}
 .search-box svg{color:var(--text3);flex-shrink:0}
+
+/* HAMBURGER */
+.ham-btn{display:none;align-items:center;justify-content:center;width:36px;height:36px;border:none;background:transparent;cursor:pointer;color:var(--text);border-radius:7px;flex-shrink:0}
+.ham-btn:hover{background:var(--bg3)}
+.sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:299;backdrop-filter:blur(2px)}
+.sb-overlay.open{display:block}
+
+@media(max-width:768px){
+  body{overflow:auto}
+  .app{flex-direction:column;height:auto;min-height:100vh}
+
+  /* Sidebar como drawer */
+  .sidebar{position:fixed;top:0;left:0;height:100%;z-index:300;transform:translateX(-100%);transition:transform .25s ease,width .25s,min-width .25s;width:260px!important;min-width:260px!important;box-shadow:4px 0 24px rgba(0,0,0,.5)}
+  .sidebar.mob-open{transform:translateX(0)}
+  .sidebar.mini{width:260px!important;min-width:260px!important;transform:translateX(-100%)}
+  .sidebar.mini.mob-open{transform:translateX(0)}
+  .sidebar.mini .nav-label,.sidebar.mini .nav-i .label,.sidebar.mini .ubadge,.sidebar.mini .fi-item .fi-label{opacity:1;height:auto;width:auto;padding:revert}
+  .sidebar.mini .nav-i{padding:9px 16px;justify-content:flex-start;border-left:2px solid transparent}
+  .sidebar.mini .nav-i.active{border-left-color:var(--blue)}
+  .sidebar.mini .fi-item{padding:7px 16px;justify-content:flex-start;border-left:2px solid transparent}
+  .sb-toggle{display:none}
+  .ham-btn{display:flex}
+
+  /* Main ocupa tela inteira */
+  .main{width:100%;min-height:100vh}
+
+  /* Topbar filial compacta */
+  #fil-topbar{padding:0 10px;height:auto;min-height:52px;flex-wrap:wrap;gap:6px;padding-top:6px;padding-bottom:6px}
+  #fil-topbar>div:first-child{flex-wrap:wrap;gap:6px}
+  #fil-topbar>div:last-child{flex-wrap:wrap;gap:4px}
+  #fil-topbar .btn{padding:5px 9px;font-size:11px}
+
+  /* Tabs com scroll */
+  .tabs{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tab{white-space:nowrap;padding:12px 14px;font-size:12px}
+
+  /* Conteúdo das páginas */
+  .page{padding:12px!important}
+
+  /* Dashboard */
+  #dash-stats{grid-template-columns:repeat(2,1fr)!important}
+  #dash-cards{grid-template-columns:1fr!important}
+
+  /* Cards de checklist/relatorio */
+  .page [style*="grid-template-columns:repeat(3"]{grid-template-columns:1fr!important}
+  .page [style*="grid-template-columns:repeat(4"]{grid-template-columns:repeat(2,1fr)!important}
+
+  /* Tabelas com scroll horizontal */
+  table{min-width:600px}
+  .card{overflow-x:auto}
+
+  /* Modais */
+  .modal{width:96%!important;max-width:96%!important;padding:16px;margin:8px}
+  .modal-bg{align-items:flex-start;padding-top:16px}
+
+  /* Inputs e botões touch-friendly */
+  input,select,textarea,.btn,.btp,.btr{min-height:44px}
+  .btn{padding:8px 12px}
+  .ei{min-height:36px}
+  .es{min-height:36px}
+
+  /* Formulários no modal — 1 coluna */
+  .modal [style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
+  .modal .fr{grid-column:1/-1}
+
+  /* Login card */
+  .login-card{width:92%;padding:24px}
+
+  /* Fonte menor para telas pequeníssimas */
+  .fi-item,.nav-i{font-size:13px}
+}
+@media(max-width:480px){
+  #dash-stats{grid-template-columns:repeat(2,1fr)!important}
+  #dash-cards{grid-template-columns:1fr!important}
+  .tab{padding:10px 11px;font-size:11px}
+}
 </style></head><body>
 
 <!-- LOGIN -->
@@ -185,6 +261,7 @@ input[type=date],input[type=month]{color-scheme:dark}
 
 <!-- APP -->
 <div id="main-app" class="app hidden">
+<div class="sb-overlay" id="sb-overlay" onclick="closeMobileSidebar()"></div>
 <div class="sidebar" id="sidebar">
   <div class="sb-top">
     <div class="sb-icon-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
@@ -235,8 +312,13 @@ input[type=date],input[type=month]{color-scheme:dark}
 
 <div class="main">
 <!-- TOPBAR GLOBAL removido -->
+<div id="global-topbar" style="background:var(--bg2);border-bottom:1px solid var(--border);padding:0 16px;height:52px;display:none;align-items:center;gap:10px;flex-shrink:0">
+  <button class="ham-btn" onclick="toggleMobileSidebar()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+  <span style="font-size:14px;font-weight:700">Expansão Bluetech</span>
+</div>
 <div id="fil-topbar" class="hidden" style="background:var(--bg2);border-bottom:1px solid var(--border);padding:0 20px;height:52px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
   <div style="display:flex;align-items:center;gap:10px">
+    <button class="ham-btn" onclick="toggleMobileSidebar()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
     <span style="font-size:12px;color:var(--text2);cursor:pointer;padding:4px 8px;border-radius:6px;transition:background .15s" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background='transparent'" onclick="voltarDash()">← Dashboard</span>
     <span style="color:var(--border)">/</span>
     <span id="fil-title" style="font-size:14px;font-weight:700">—</span>
@@ -693,6 +775,11 @@ function toggleTheme(){
 
 // ── SIDEBAR ──
 function toggleSidebar(){sidebarMini=!sidebarMini;document.getElementById('sidebar').classList.toggle('mini',sidebarMini);}
+function isMobile(){return window.innerWidth<=768;}
+function toggleMobileSidebar(){const sb=document.getElementById('sidebar');const ov=document.getElementById('sb-overlay');const open=sb.classList.toggle('mob-open');ov.classList.toggle('open',open);}
+function closeMobileSidebar(){document.getElementById('sidebar').classList.remove('mob-open');document.getElementById('sb-overlay').classList.remove('open');}
+function updateMobileUI(){const gt=document.getElementById('global-topbar');if(gt)gt.style.display=isMobile()?'flex':'none';}
+window.addEventListener('resize',updateMobileUI);
 
 // ── NOTIFICAÇÕES ──
 let notificacoes=[];
@@ -802,7 +889,8 @@ function initApp(){
   document.getElementById('btn-nova-fil').style.display=isG?'inline-flex':'none';
   document.getElementById('nav-catalogo').style.display=(isG||isC)?'flex':'none';
   document.getElementById('nav-cronpadrao').style.display=(isG||isC)?'flex':'none';
-  buildSidebarFiliais();navTo('dash');calcNotifs();
+  buildSidebarFiliais();navTo('dash');calcNotifs();updateMobileUI();
+  document.querySelectorAll('.nav-i,.fi-item').forEach(el=>el.addEventListener('click',()=>{if(isMobile())closeMobileSidebar();}));
 }
 
 function getFiliaisVisiveis(){return currentUser.perfil==='coordenador'?filiaisAbertura.filter(f=>f.respUser===currentUser.u||(currentUser.filial||[]).includes(f.id)):filiaisAbertura;}
