@@ -855,8 +855,9 @@ async function carregarTodosDados() {
     const tarefas = (tarDb||[]).filter(t => t.filial_id === f.id).map(t => ({
       d: t.descricao, dept: t.dept, s: t.status||'NÃO INICIADO',
       o: t.obs||'', inicio: t.inicio||'', prazo: t.prazo||7,
-      deps: Array.isArray(t.deps) ? t.deps : [], _id: t.id
+      deps: Array.isArray(t.deps) ? t.deps : [], ordem: t.ordem||999, _id: t.id
     }));
+    tarefas.sort((a,b)=>(a.ordem||999)-(b.ordem||999));
     const compras = (compDb||[]).filter(c => c.filial_id === f.id).map(c => ({
       cat: c.categoria, i: c.item, q: c.quantidade||1,
       ss: c.status_sol||'AGUARDANDO COMPRA', sol: c.solicitante||'',
@@ -961,7 +962,9 @@ function propagarInicio(fid,ri,dataInicio){
 }
 
 function renderCron(data){
-  const fid=currentFid,tarefas=dados[fid]?.tarefas||[];data=data||tarefas;
+  const fid=currentFid,tarefas=dados[fid]?.tarefas||[];
+  tarefas.sort((a,b)=>(a.ordem||999)-(b.ordem||999));
+  data=data||tarefas;
   autoAtraso(tarefas);
   const isG=currentUser.perfil==='gerente',canEdit=currentUser.perfil!=='compras';
   const at=tarefas.some(t=>t.s==='ATRASO');
@@ -1243,6 +1246,7 @@ async function aplicarOrdemNasFiliais(){
     count++;
   }
   await carregarTodosDados();
+  if(currentFid)renderCron();
   alert(`Ordem aplicada com sucesso em ${count} filial${count!==1?'is':''}!`);
 }
 async function numerarCronAutomaticamente(){
