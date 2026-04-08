@@ -488,8 +488,8 @@ input[type=date],input[type=month]{color-scheme:dark}
 </div>
 
 <div id="pg-cronpadrao" class="hidden pg">
-  <div class="sec-hdr"><div><div style="font-size:20px;font-weight:700">Cronograma padrão</div><div style="font-size:12px;color:var(--text2);margin-top:2px">Modelo de tarefas para novas filiais</div></div><div style="display:flex;gap:8px"><button class="btn" id="btn-numerar-cron" onclick="numerarCronAutomaticamente()">123 Numerar automaticamente</button><button class="btn btp" id="btn-aplicar-ordem" onclick="aplicarOrdemNasFiliais()">↺ Aplicar ordem em todas as filiais</button><button class="btn btp" id="btn-novo-cron" onclick="openCronPadraoNew()">+ Nova tarefa</button></div></div>
-  <div class="card" style="padding:0;overflow:hidden;overflow-x:auto"><table style="min-width:750px"><thead><tr><th style="width:60px">Ordem</th><th>Descrição</th><th>Departamento</th><th>Prazo</th><th>Paralela com</th><th>Ações</th></tr></thead><tbody id="cronpadrao-body"></tbody></table></div>
+  <div class="sec-hdr"><div><div style="font-size:20px;font-weight:700">Cronograma padrão</div><div style="font-size:12px;color:var(--text2);margin-top:2px">Modelo de tarefas para novas filiais</div></div><div style="display:flex;gap:8px"><button class="btn btp" id="btn-aplicar-ordem" onclick="aplicarOrdemNasFiliais()">↺ Aplicar ordem em todas as filiais</button><button class="btn btp" id="btn-novo-cron" onclick="openCronPadraoNew()">+ Nova tarefa</button></div></div>
+  <div class="card" style="padding:0;overflow:hidden;overflow-x:auto"><table style="min-width:750px"><thead><tr><th style="width:40px">#</th><th>Descrição</th><th>Departamento</th><th>Prazo</th><th>Paralela com</th><th>Ações</th></tr></thead><tbody id="cronpadrao-body"></tbody></table></div>
 </div>
 
 <div id="pg-filiaisativas" class="hidden pg">
@@ -590,7 +590,6 @@ input[type=date],input[type=month]{color-scheme:dark}
     <div class="fr" style="grid-column:1/-1"><label>Descrição</label><input type="text" id="cp-desc"></div>
     <div class="fr"><label>Departamento</label><select id="cp-dept"><option>COMERCIAL</option><option>OPERACIONAL</option><option>CONTABILIDADE</option><option>FINANCEIRO</option><option>COMPRAS</option><option>RECRUTAMENTO</option><option>SUPORTE</option></select></div>
     <div class="fr"><label>Prazo (dias)</label><input type="number" id="cp-prazo" placeholder="7" min="1"></div>
-    <div class="fr"><label>Ordem</label><input type="number" id="cp-ordem" placeholder="1" min="1"></div>
     <div class="fr" style="grid-column:1/-1"><label>Tarefas paralelas (executam ao mesmo tempo)</label><select id="cp-dep" multiple style="height:110px;width:100%;font-size:13px;padding:6px;border:1px solid var(--border);border-radius:7px;background:var(--bg3);color:var(--text)"></select><div style="font-size:10px;color:var(--text3);margin-top:3px">Ctrl+clique para múltiplas. Ao iniciar esta tarefa, as paralelas iniciam automaticamente.</div></div>
   </div>
   <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn" onclick="hideMod('cron-padrao')">Cancelar</button><button class="btn btp" onclick="salvarCronPadrao()">Salvar</button></div>
@@ -1190,71 +1189,79 @@ function delCatItem(ri){const c=catalogoItens[ri];if(c._id)sbFetch(`/rest/v1/cat
 function renderCronPadrao(){
   const canEdit=currentUser.perfil==='gerente'||currentUser.perfil==='compras';
   const btn=document.getElementById('btn-novo-cron');if(btn)btn.style.display=canEdit?'inline-flex':'none';
-  const btnN=document.getElementById('btn-numerar-cron');if(btnN)btnN.style.display=canEdit?'inline-flex':'none';
   const btnA=document.getElementById('btn-aplicar-ordem');if(btnA)btnA.style.display=canEdit?'inline-flex':'none';
-  // Auto-preencher ordem se ausente
-  const semOrdem=cronPadrao.filter(t=>!t.ordem);
-  if(semOrdem.length){cronPadrao.sort((a,b)=>(a.ordem||999)-(b.ordem||999));cronPadrao.forEach((t,i)=>{if(!t.ordem){t.ordem=i+1;if(t._id)sbFetch(`/rest/v1/cron_padrao?id=eq.${t._id}`,{method:'PATCH',body:JSON.stringify({ordem:t.ordem})});}});}
-  const sorted=[...cronPadrao].sort((a,b)=>(a.ordem||999)-(b.ordem||999));
-  document.getElementById('cronpadrao-body').innerHTML=sorted.map((t)=>{
-    const ri=cronPadrao.indexOf(t);
+  document.getElementById('cronpadrao-body').innerHTML=cronPadrao.map((t,ri)=>{
     const deps=t.deps&&t.deps.length?t.deps.map(d=>cronPadrao[d]?.d?.substring(0,18)+'...').join(', '):'—';
-    return`<tr><td><input class="ei" type="number" value="${t.ordem||''}" style="width:50px;text-align:center" min="1" onchange="updCronOrdem(${ri},parseInt(this.value)||1)"></td><td style="font-size:12px">${t.d}</td><td>${deptTag(t.dept)}</td><td style="text-align:center">${t.prazo}d</td><td style="font-size:11px;color:var(--text2);max-width:160px">${deps}</td>
-    <td>${canEdit?`<div style="display:flex;gap:4px"><button class="btn" style="font-size:11px;padding:3px 9px" onclick="editCronPadrao(${ri})">✎</button><button class="btn-del" onclick="delCronPadrao(${ri})" title="Excluir">${TRASH}</button></div>`:''}</td></tr>`;
+    const movebtns=canEdit?`<button class="btn" style="font-size:11px;padding:2px 7px" onclick="moverCron(${ri},-1)" ${ri===0?'disabled':''}>↑</button><button class="btn" style="font-size:11px;padding:2px 7px" onclick="moverCron(${ri},1)" ${ri===cronPadrao.length-1?'disabled':''}>↓</button>`:'';
+    return`<tr><td style="text-align:center;color:var(--text3);font-size:12px">${ri+1}</td><td style="font-size:12px">${t.d}</td><td>${deptTag(t.dept)}</td><td style="text-align:center">${t.prazo}d</td><td style="font-size:11px;color:var(--text2);max-width:160px">${deps}</td>
+    <td><div style="display:flex;gap:4px">${movebtns}${canEdit?`<button class="btn" style="font-size:11px;padding:3px 9px" onclick="editCronPadrao(${ri})">✎</button><button class="btn-del" onclick="delCronPadrao(${ri})" title="Excluir">${TRASH}</button>`:''}</div></td></tr>`;
   }).join('');
 }
-function openCronPadraoNew(){document.getElementById('cp-title').textContent='Nova tarefa padrão';document.getElementById('cp-idx').value=-1;document.getElementById('cp-desc').value='';document.getElementById('cp-prazo').value='';document.getElementById('cp-ordem').value=cronPadrao.length+1;document.getElementById('cp-dep').innerHTML=cronPadrao.map((x,i)=>`<option value="${i}">${x.ordem||i+1}. ${x.d.substring(0,35)}</option>`).join('');showMod('cron-padrao');}
+function moverCron(ri,dir){
+  const ni=ri+dir;if(ni<0||ni>=cronPadrao.length)return;
+  [cronPadrao[ri],cronPadrao[ni]]=[cronPadrao[ni],cronPadrao[ri]];
+  salvarOrdemCronPadrao();renderCronPadrao();
+}
+async function salvarOrdemCronPadrao(){
+  cronPadrao.forEach((t,i)=>{t.ordem=i;});
+  for(const t of cronPadrao){if(t._id)await sbFetch(`/rest/v1/cron_padrao?id=eq.${t._id}`,{method:'PATCH',body:JSON.stringify({ordem:t.ordem})});}
+}
+function openCronPadraoNew(){
+  document.getElementById('cp-title').textContent='Nova tarefa padrão';document.getElementById('cp-idx').value=-1;
+  document.getElementById('cp-desc').value='';document.getElementById('cp-prazo').value='';
+  document.getElementById('cp-dep').innerHTML=cronPadrao.map((x,i)=>`<option value="${i}">${i+1}. ${x.d.substring(0,35)}</option>`).join('');
+  showMod('cron-padrao');
+}
 function editCronPadrao(i){
   document.getElementById('cp-title').textContent='Editar tarefa padrão';document.getElementById('cp-idx').value=i;
-  const t=cronPadrao[i];document.getElementById('cp-desc').value=t.d;document.getElementById('cp-dept').value=t.dept;document.getElementById('cp-prazo').value=t.prazo;document.getElementById('cp-ordem').value=t.ordem||i+1;
-  document.getElementById('cp-dep').innerHTML=cronPadrao.map((x,j)=>j!==i?`<option value="${j}"${(t.deps||[]).includes(j)?' selected':''}>${x.ordem||j+1}. ${x.d.substring(0,35)}</option>`:'').join('');
+  const t=cronPadrao[i];document.getElementById('cp-desc').value=t.d;document.getElementById('cp-dept').value=t.dept;document.getElementById('cp-prazo').value=t.prazo;
+  document.getElementById('cp-dep').innerHTML=cronPadrao.map((x,j)=>j!==i?`<option value="${j}"${(t.deps||[]).includes(j)?' selected':''}>${j+1}. ${x.d.substring(0,35)}</option>`:'').join('');
   showMod('cron-padrao');
 }
 async function salvarCronPadrao(){
   const d=document.getElementById('cp-desc').value.trim();if(!d)return;
   const sel=document.getElementById('cp-dep');const deps=[...sel.selectedOptions].map(o=>parseInt(o.value)).filter(v=>!isNaN(v));
   const idx=parseInt(document.getElementById('cp-idx').value);
-  const dept=document.getElementById('cp-dept').value,prazo=parseInt(document.getElementById('cp-prazo').value)||7,ordem=parseInt(document.getElementById('cp-ordem').value)||cronPadrao.length+1;
-  if(idx>=0){cronPadrao[idx]={...cronPadrao[idx],d,dept,prazo,deps,ordem};const t=cronPadrao[idx];if(t._id)sbFetch(`/rest/v1/cron_padrao?id=eq.${t._id}`,{method:'PATCH',body:JSON.stringify({descricao:d,dept,prazo,deps,ordem})});}
-  else{const novo={d,dept,prazo,deps,ordem};const r=await sbFetch('/rest/v1/cron_padrao',{method:'POST',body:JSON.stringify({descricao:d,dept,prazo,deps,ordem})});if(r&&r[0])novo._id=r[0].id;cronPadrao.push(novo);}
+  const dept=document.getElementById('cp-dept').value,prazo=parseInt(document.getElementById('cp-prazo').value)||7;
+  if(idx>=0){
+    const ordem=cronPadrao[idx].ordem;
+    cronPadrao[idx]={...cronPadrao[idx],d,dept,prazo,deps};
+    const t=cronPadrao[idx];if(t._id)sbFetch(`/rest/v1/cron_padrao?id=eq.${t._id}`,{method:'PATCH',body:JSON.stringify({descricao:d,dept,prazo,deps,ordem})});
+  }else{
+    const ordem=cronPadrao.length;
+    const novo={d,dept,prazo,deps,ordem};
+    const r=await sbFetch('/rest/v1/cron_padrao',{method:'POST',body:JSON.stringify({descricao:d,dept,prazo,deps,ordem})});
+    if(r&&r[0])novo._id=r[0].id;
+    cronPadrao.push(novo);
+  }
   replicarCronParaFiliais();hideMod('cron-padrao');renderCronPadrao();
 }
-function delCronPadrao(i){if(!confirm('Excluir?'))return;const t=cronPadrao[i];if(t._id)sbFetch(`/rest/v1/cron_padrao?id=eq.${t._id}`,{method:'DELETE'});cronPadrao.splice(i,1);renderCronPadrao();}
-function updCronOrdem(ri,val){cronPadrao[ri].ordem=val;const t=cronPadrao[ri];if(t._id)sbFetch(`/rest/v1/cron_padrao?id=eq.${t._id}`,{method:'PATCH',body:JSON.stringify({ordem:val})});replicarCronParaFiliais();renderCronPadrao();}
+function delCronPadrao(i){if(!confirm('Excluir?'))return;const t=cronPadrao[i];if(t._id)sbFetch(`/rest/v1/cron_padrao?id=eq.${t._id}`,{method:'DELETE'});cronPadrao.splice(i,1);salvarOrdemCronPadrao();renderCronPadrao();}
 function replicarCronParaFiliais(){
-  const sorted=[...cronPadrao].sort((a,b)=>(a.ordem||999)-(b.ordem||999));
   filiaisAbertura.forEach(f=>{
     const tarefas=dados[f.id]?.tarefas;if(!tarefas)return;
     const matched=[],extras=[];
-    tarefas.forEach(t=>{const cp=sorted.find(c=>c.d===t.d);if(cp){t.dept=cp.dept;t.prazo=cp.prazo;t.deps=cp.deps;t.ordem=cp.ordem;matched.push({t,ordem:cp.ordem});}else{extras.push(t);}});
+    tarefas.forEach(t=>{const cpIdx=cronPadrao.findIndex(c=>c.d===t.d);if(cpIdx>=0){const cp=cronPadrao[cpIdx];t.dept=cp.dept;t.prazo=cp.prazo;t.deps=cp.deps;t.ordem=cpIdx;matched.push({t,ordem:cpIdx});}else{extras.push(t);}});
     matched.sort((a,b)=>a.ordem-b.ordem);
     dados[f.id].tarefas=[...matched.map(x=>x.t),...extras];
     dados[f.id].tarefas.forEach(t=>{if(t._id&&t.ordem!=null)sbFetch(`/rest/v1/tarefas?id=eq.${t._id}`,{method:'PATCH',body:JSON.stringify({ordem:t.ordem})});});
   });
 }
 async function aplicarOrdemNasFiliais(){
-  const sorted=[...cronPadrao].sort((a,b)=>(a.ordem||999)-(b.ordem||999));
   let count=0;
   for(const f of filiaisAbertura){
     const fid=f.id;
     const tarDb=await sbFetch('/rest/v1/tarefas?filial_id=eq.'+fid+'&select=*');
     if(!Array.isArray(tarDb)||!tarDb.length)continue;
     for(const t of tarDb){
-      const cp=sorted.find(c=>c.d===t.descricao);
-      if(cp&&cp.ordem!=null)await sbFetch(`/rest/v1/tarefas?id=eq.${t.id}`,{method:'PATCH',body:JSON.stringify({ordem:cp.ordem})});
+      const cpIdx=cronPadrao.findIndex(c=>c.d===t.descricao);
+      if(cpIdx>=0)await sbFetch(`/rest/v1/tarefas?id=eq.${t.id}`,{method:'PATCH',body:JSON.stringify({ordem:cpIdx})});
     }
     count++;
   }
   await carregarTodosDados();
   if(currentFid)renderCron();
   alert(`Ordem aplicada com sucesso em ${count} filial${count!==1?'is':''}!`);
-}
-async function numerarCronAutomaticamente(){
-  cronPadrao.sort((a,b)=>(a.ordem||999)-(b.ordem||999));
-  cronPadrao.forEach((t,i)=>{t.ordem=i+1;});
-  for(const t of cronPadrao){if(t._id)await sbFetch(`/rest/v1/cron_padrao?id=eq.${t._id}`,{method:'PATCH',body:JSON.stringify({ordem:t.ordem})});}
-  renderCronPadrao();
-  alert('Numeração aplicada: '+cronPadrao.length+' tarefas numeradas de 1 a '+cronPadrao.length+'.');
 }
 
 // ── FILIAIS ATIVAS ──
