@@ -1205,7 +1205,17 @@ async function salvarCronPadrao(){
 }
 function delCronPadrao(i){if(!confirm('Excluir?'))return;const t=cronPadrao[i];if(t._id)sbFetch(`/rest/v1/cron_padrao?id=eq.${t._id}`,{method:'DELETE'});cronPadrao.splice(i,1);renderCronPadrao();}
 function updCronOrdem(ri,val){cronPadrao[ri].ordem=val;const t=cronPadrao[ri];if(t._id)sbFetch(`/rest/v1/cron_padrao?id=eq.${t._id}`,{method:'PATCH',body:JSON.stringify({ordem:val})});replicarCronParaFiliais();renderCronPadrao();}
-function replicarCronParaFiliais(){filiaisAbertura.forEach(f=>{const tarefas=dados[f.id]?.tarefas||[];tarefas.forEach(t=>{if(t.s!=='NÃO INICIADO')return;const cp=cronPadrao.find(c=>c.d===t.d);if(!cp)return;t.dept=cp.dept;t.prazo=cp.prazo;t.deps=cp.deps;t.ordem=cp.ordem;});});}
+function replicarCronParaFiliais(){
+  const sorted=[...cronPadrao].sort((a,b)=>(a.ordem||999)-(b.ordem||999));
+  filiaisAbertura.forEach(f=>{
+    const tarefas=dados[f.id]?.tarefas;if(!tarefas)return;
+    const matched=[],extras=[];
+    tarefas.forEach(t=>{const cp=sorted.find(c=>c.d===t.d);if(cp){t.dept=cp.dept;t.prazo=cp.prazo;t.deps=cp.deps;t.ordem=cp.ordem;matched.push({t,ordem:cp.ordem});}else{extras.push(t);}});
+    matched.sort((a,b)=>a.ordem-b.ordem);
+    dados[f.id].tarefas=[...matched.map(x=>x.t),...extras];
+    dados[f.id].tarefas.forEach(t=>{if(t._id&&t.ordem!=null)sbFetch(`/rest/v1/tarefas?id=eq.${t._id}`,{method:'PATCH',body:JSON.stringify({ordem:t.ordem})});});
+  });
+}
 
 // ── FILIAIS ATIVAS ──
 function renderFiliaisAtivas(){
