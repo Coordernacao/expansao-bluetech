@@ -327,7 +327,7 @@ input[type=date],input[type=month]{color-scheme:dark}
   </div>
   <div style="display:flex;gap:6px">
     <button class="btn" id="btn-add-task" onclick="showMod('task')">+ Tarefa</button>
-    <button class="btn" onclick="showModItem()">+ Compra</button>
+    <button class="btn" id="btn-add-comp" onclick="showModItem()">+ Compra</button>
     <button class="btn btp" onclick="showTab('rel')">↗ Relatório</button>
     <button class="btn" id="btn-edit-fil" onclick="showModEditFilial()" style="display:none" title="Editar filial">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -399,9 +399,10 @@ input[type=date],input[type=month]{color-scheme:dark}
   <div id="t-comp" style="display:none">
     <div style="font-size:11px;color:var(--text2);background:var(--bg3);padding:5px 10px;border-radius:6px;margin-bottom:10px;display:inline-block;border:1px solid var(--border)">✎ Clique em texto para editar inline • Categorias colapsáveis</div>
     <div class="fbar">
-      <select onchange="renderComp(fComp(this.value,'',''))"><option value="">Todas categorias</option><option>COZINHA</option><option>ESTOQUE</option><option>MATERIAL ESTOQUE</option><option>PAPELARIA</option><option>LIMPEZA</option><option>REFEITORIO</option><option>LOGISTICA</option><option>ESTRUTURAL</option><option>SEGURANÇA</option><option>REDE</option><option>MONTAGEM ESTRUTURA</option></select>
-      <select onchange="renderComp(fComp('',this.value,''))"><option value="">Todos status</option><option>AGUARDANDO COMPRA</option><option>EM ANDAMENTO</option><option>TRANSFERÊNCIA</option><option>COMPRA REALIZADA</option><option>COMPRA PARALISADA</option><option>FINALIZADO</option></select>
-      <select id="filtro-origem" onchange="renderComp(fComp('','',this.value))"><option value="">Todas origens</option></select>
+      <select id="comp-fcat" onchange="filterComp()"><option value="">Todas categorias</option><option>COZINHA</option><option>ESTOQUE</option><option>MATERIAL ESTOQUE</option><option>PAPELARIA</option><option>LIMPEZA</option><option>REFEITORIO</option><option>LOGISTICA</option><option>ESTRUTURAL</option><option>SEGURANÇA</option><option>REDE</option><option>MONTAGEM ESTRUTURA</option><option>CUSTOS ADICIONAIS</option></select>
+      <select id="comp-fst" onchange="filterComp()"><option value="">Todos status</option><option>PENDENTE</option><option>AGUARDANDO COMPRA</option><option>EM ANDAMENTO</option><option>TRANSFERÊNCIA</option><option>COMPRA REALIZADA</option><option>COMPRA PARALISADA</option><option>FINALIZADO</option></select>
+      <select id="filtro-origem" onchange="filterComp()"><option value="">Todas origens</option></select>
+      <div class="search-box"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" id="comp-busca" placeholder="Buscar item..." oninput="filterComp()" style="width:160px"></div>
       <div style="margin-left:auto;display:flex;gap:12px;font-size:12px">
         <span style="color:var(--text2)">Itens: <b id="comp-count">0</b></span>
         <span style="color:var(--text2)">Total: <b id="ct">—</b></span>
@@ -479,7 +480,7 @@ input[type=date],input[type=month]{color-scheme:dark}
 <div id="pg-catalogo" class="hidden pg">
   <div class="sec-hdr"><div><div style="font-size:20px;font-weight:700">Catálogo de itens</div><div style="font-size:12px;color:var(--text2);margin-top:2px">Itens padrão carregados em novas filiais</div></div><button class="btn btp" id="btn-novo-cat" onclick="showMod('cat-item')">+ Novo item</button></div>
   <div class="fbar">
-    <select onchange="renderCatalogo(this.value)"><option value="">Todas categorias</option><option>COZINHA</option><option>ESTOQUE</option><option>MATERIAL ESTOQUE</option><option>PAPELARIA</option><option>LIMPEZA</option><option>REFEITORIO</option><option>LOGISTICA</option><option>ESTRUTURAL</option><option>SEGURANÇA</option><option>REDE</option><option>MONTAGEM ESTRUTURA</option></select>
+    <select onchange="renderCatalogo(this.value)"><option value="">Todas categorias</option><option>COZINHA</option><option>ESTOQUE</option><option>MATERIAL ESTOQUE</option><option>PAPELARIA</option><option>LIMPEZA</option><option>REFEITORIO</option><option>LOGISTICA</option><option>ESTRUTURAL</option><option>SEGURANÇA</option><option>REDE</option><option>MONTAGEM ESTRUTURA</option><option>CUSTOS ADICIONAIS</option></select>
     <input type="text" placeholder="Buscar item..." oninput="renderCatalogo('',this.value)" style="width:220px;font-size:12px;padding:5px 8px;border:1px solid var(--border);border-radius:7px;background:var(--bg3);color:var(--text)">
   </div>
   <div class="card" style="padding:0;overflow:hidden"><table><thead><tr><th>Categoria</th><th>Item</th><th>Qtd padrão</th><th>Obs.</th><th>Ações</th></tr></thead><tbody id="cat-body"></tbody></table></div>
@@ -544,7 +545,7 @@ input[type=date],input[type=month]{color-scheme:dark}
 <div id="mod-item" class="modal-bg hidden"><div class="modal"><h3>Adicionar item de compra</h3>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
     <div class="fr" style="grid-column:1/-1"><label>Item</label><input type="text" id="ii"></div>
-    <div class="fr"><label>Categoria</label><select id="ic"><option>COZINHA</option><option>ESTOQUE</option><option>MATERIAL ESTOQUE</option><option>PAPELARIA</option><option>LIMPEZA</option><option>REFEITORIO</option><option>LOGISTICA</option><option>ESTRUTURAL</option><option>SEGURANÇA</option><option>REDE</option><option>MONTAGEM ESTRUTURA</option></select></div>
+    <div class="fr"><label>Categoria</label><select id="ic"><option>COZINHA</option><option>ESTOQUE</option><option>MATERIAL ESTOQUE</option><option>PAPELARIA</option><option>LIMPEZA</option><option>REFEITORIO</option><option>LOGISTICA</option><option>ESTRUTURAL</option><option>SEGURANÇA</option><option>REDE</option><option>MONTAGEM ESTRUTURA</option><option>CUSTOS ADICIONAIS</option></select></div>
     <div class="fr"><label>Quantidade</label><input type="number" id="iq" placeholder="1" min="1"></div>
     <div class="fr"><label>Valor unitário (R$)</label><input type="text" id="iv"></div>
     <div class="fr"><label>Solicitante</label><select id="is" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:var(--bg3);color:var(--text)"></select></div>
@@ -573,7 +574,7 @@ input[type=date],input[type=month]{color-scheme:dark}
 <div id="mod-cat-item" class="modal-bg hidden"><div class="modal"><h3>Novo item no catálogo</h3>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
     <div class="fr" style="grid-column:1/-1"><label>Item</label><input type="text" id="ci-nome"></div>
-    <div class="fr"><label>Categoria</label><select id="ci-cat"><option>COZINHA</option><option>ESTOQUE</option><option>MATERIAL ESTOQUE</option><option>PAPELARIA</option><option>LIMPEZA</option><option>REFEITORIO</option><option>LOGISTICA</option><option>ESTRUTURAL</option><option>SEGURANÇA</option><option>REDE</option><option>MONTAGEM ESTRUTURA</option></select></div>
+    <div class="fr"><label>Categoria</label><select id="ci-cat"><option>COZINHA</option><option>ESTOQUE</option><option>MATERIAL ESTOQUE</option><option>PAPELARIA</option><option>LIMPEZA</option><option>REFEITORIO</option><option>LOGISTICA</option><option>ESTRUTURAL</option><option>SEGURANÇA</option><option>REDE</option><option>MONTAGEM ESTRUTURA</option><option>CUSTOS ADICIONAIS</option></select></div>
     <div class="fr"><label>Qtd padrão</label><input type="number" id="ci-qtd" placeholder="1" min="1"></div>
     <div class="fr" style="grid-column:1/-1"><label>Observação</label><input type="text" id="ci-obs"></div>
   </div>
@@ -608,7 +609,7 @@ const SSEL=['PENDENTE','AGUARDANDO COMPRA','EM ANDAMENTO','TRANSFERÊNCIA','COMP
 const SCRON=['NÃO INICIADO','EM ANDAMENTO','FINALIZADO','ATRASO'];
 const COMP_BG={'PENDENTE':'rgba(245,166,35,0.25)','AGUARDANDO COMPRA':'rgba(139,144,168,0.25)','EM ANDAMENTO':'rgba(79,142,247,0.25)','TRANSFERÊNCIA':'rgba(155,111,247,0.25)','COMPRA REALIZADA':'rgba(45,212,191,0.25)','COMPRA PARALISADA':'rgba(255,88,88,0.25)','FINALIZADO':'rgba(54,201,142,0.25)'};
 const CRON_BG={'NÃO INICIADO':'rgba(139,144,168,.07)','EM ANDAMENTO':'rgba(79,142,247,.1)','FINALIZADO':'rgba(54,201,142,.1)','ATRASO':'rgba(245,88,88,.12)'};
-const ALL_CATS=['COZINHA','ESTOQUE','MATERIAL ESTOQUE','PAPELARIA','LIMPEZA','REFEITORIO','LOGISTICA','ESTRUTURAL','SEGURANÇA','REDE','MONTAGEM ESTRUTURA'];
+const ALL_CATS=['COZINHA','ESTOQUE','MATERIAL ESTOQUE','PAPELARIA','LIMPEZA','REFEITORIO','LOGISTICA','ESTRUTURAL','SEGURANÇA','REDE','MONTAGEM ESTRUTURA','CUSTOS ADICIONAIS'];
 const ALL_DEPTS=['COMERCIAL','OPERACIONAL','CONTABILIDADE','FINANCEIRO','COMPRAS','RECRUTAMENTO','SUPORTE'];
 const MESES=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 const DEPT_COLORS={COMERCIAL:'#4f8ef7',OPERACIONAL:'#2dd4bf',CONTABILIDADE:'#f5a623',FINANCEIRO:'#36c98e',COMPRAS:'#9b6ff7',RECRUTAMENTO:'#f55858',SUPORTE:'#8b90a8'};
@@ -1001,7 +1002,8 @@ function fCron(dept,st,busca){let d=[...dados[currentFid]?.tarefas||[]];if(dept)
 
 // ── COMPRAS (colapsável por categoria) ──
 function populateFO(){const el=document.getElementById('filtro-origem');if(!el)return;el.innerHTML='<option value="">Todas origens</option>'+filiaisAtivas.map(f=>`<option value="${f.id}">${f.nome}</option>`).join('');}
-function fComp(cat,st,fo){let d=[...dados[currentFid]?.compras||[]];if(cat)d=d.filter(x=>x.cat===cat);if(st)d=d.filter(x=>x.ss===st);if(fo)d=d.filter(x=>x.fo===fo);return d;}
+function fComp(cat,st,fo,busca){let d=[...dados[currentFid]?.compras||[]];if(cat)d=d.filter(x=>x.cat===cat);if(st)d=d.filter(x=>x.ss===st);if(fo)d=d.filter(x=>x.fo===fo);if(busca)d=d.filter(x=>x.i.toLowerCase().includes(busca.toLowerCase()));return d;}
+function filterComp(){const cat=document.getElementById('comp-fcat')?.value||'';const st=document.getElementById('comp-fst')?.value||'';const fo=document.getElementById('filtro-origem')?.value||'';const busca=document.getElementById('comp-busca')?.value||'';renderComp(fComp(cat,st,fo,busca));}
 
 function renderComp(data){
   const fid=currentFid;const allComps=dados[fid]?.compras||[];data=data||allComps;
@@ -1325,6 +1327,7 @@ function selFil(id){
   document.getElementById('fil-prev-pill').innerHTML=prevPill(fil?.prevAbertura);
   const isC=currentUser.perfil==='compras',isG=currentUser.perfil==='gerente';
   document.getElementById('btn-add-task').style.display=isC?'none':'inline-flex';
+  document.getElementById('btn-add-comp').style.display='inline-flex';
   document.getElementById('btn-excluir-fil').style.display=isG?'inline-flex':'none';
   document.getElementById('btn-edit-fil').style.display=isG?'inline-flex':'none';
   document.getElementById('tb-fin').style.display=isC?'none':'block';
