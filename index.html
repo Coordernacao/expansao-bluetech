@@ -1252,20 +1252,25 @@ function replicarCronParaFiliais(){
   });
 }
 async function aplicarOrdemNasFiliais(){
-  let count=0;
+  if(!confirm('Isso vai reordenar o cronograma de TODAS as filiais. Continuar?')) return;
+  const sorted = [...cronPadrao].sort((a,b)=>(a.ordem||999)-(b.ordem||999));
+  let count = 0;
   for(const f of filiaisAbertura){
-    const fid=f.id;
-    const tarDb=await sbFetch('/rest/v1/tarefas?filial_id=eq.'+fid+'&select=*');
-    if(!Array.isArray(tarDb)||!tarDb.length)continue;
-    for(const t of tarDb){
-      const cpIdx=cronPadrao.findIndex(c=>c.d===t.descricao);
-      if(cpIdx>=0)await sbFetch(`/rest/v1/tarefas?id=eq.${t.id}`,{method:'PATCH',body:JSON.stringify({ordem:cpIdx})});
+    const fid = f.id;
+    const tarDb = await sbFetch('/rest/v1/tarefas?filial_id=eq.'+fid+'&select=*');
+    if(!Array.isArray(tarDb)) continue;
+    for(let i=0; i<sorted.length; i++){
+      const cp = sorted[i];
+      const tar = tarDb.find(t => t.descricao === cp.d);
+      if(tar){
+        await sbFetch('/rest/v1/tarefas?id=eq.'+tar.id, {method:'PATCH', body: JSON.stringify({ordem: i})});
+      }
     }
     count++;
   }
   await carregarTodosDados();
-  if(currentFid)renderCron();
-  alert(`Ordem aplicada com sucesso em ${count} filial${count!==1?'is':''}!`);
+  if(currentFid) renderCron();
+  alert('Ordem aplicada em '+count+' filiais!');
 }
 
 // ── FILIAIS ATIVAS ──
