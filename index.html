@@ -1258,10 +1258,12 @@ async function aplicarOrdemNasFiliais(){
   for(const f of filiaisAbertura){
     const fid = f.id;
     const tarDb = await sbFetch('/rest/v1/tarefas?filial_id=eq.'+fid+'&select=*');
+    console.log('Filial '+fid+' tarefas encontradas:', tarDb?.length, tarDb?.map(t=>t.descricao));
     if(!Array.isArray(tarDb)) continue;
     for(let i=0; i<sorted.length; i++){
       const cp = sorted[i];
       const tar = tarDb.find(t => t.descricao === cp.d);
+      console.log('Match cp.d='+cp.d+' tar=', tar?.id);
       if(tar){
         await sbFetch('/rest/v1/tarefas?id=eq.'+tar.id, {method:'PATCH', body: JSON.stringify({ordem: i})});
       }
