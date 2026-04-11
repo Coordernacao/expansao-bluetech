@@ -103,7 +103,7 @@ input[type=date],input[type=month]{color-scheme:dark}
 .fr label{display:block;font-size:11px;color:var(--text2);margin-bottom:3px;font-weight:600}
 .fr input,.fr select{width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:var(--bg3);color:var(--text);transition:border .15s}
 .fr input:focus,.fr select:focus{outline:none;border-color:var(--blue)}
-.hidden{display:none}
+.hidden{display:none!important}
 .fbar{display:flex;gap:7px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
 .fbar select,.fbar input[type=text]{font-size:12px;padding:5px 8px;border:1px solid var(--border);border-radius:7px;background:var(--bg3);color:var(--text)}
 
@@ -178,70 +178,86 @@ input[type=date],input[type=month]{color-scheme:dark}
   body{overflow:auto}
   .app{flex-direction:column;height:auto;min-height:100vh}
 
-  /* Sidebar como drawer */
-  .sidebar{position:fixed;top:0;left:0;height:100%;z-index:300;transform:translateX(-100%);transition:transform .25s ease,width .25s,min-width .25s;width:260px!important;min-width:260px!important;box-shadow:4px 0 24px rgba(0,0,0,.5)}
-  .sidebar.mob-open{transform:translateX(0)}
+  /* ── SIDEBAR DRAWER ── */
+  .sidebar{
+    position:fixed;top:0;left:0;height:100%;z-index:300;
+    transform:translateX(-100%);
+    transition:transform .25s ease,box-shadow .25s;
+    width:260px!important;min-width:260px!important;
+    box-shadow:none
+  }
+  .sidebar.mob-open{
+    transform:translateX(0);
+    box-shadow:4px 0 32px rgba(0,0,0,.6)
+  }
   .sidebar.mini{width:260px!important;min-width:260px!important;transform:translateX(-100%)}
   .sidebar.mini.mob-open{transform:translateX(0)}
-  .sidebar.mini .nav-label,.sidebar.mini .nav-i .label,.sidebar.mini .ubadge,.sidebar.mini .fi-item .fi-label{opacity:1;height:auto;width:auto;padding:revert}
+  .sidebar.mini .nav-label{opacity:1;height:auto;padding:10px 16px 4px}
+  .sidebar.mini .nav-i .label,.sidebar.mini .fi-item .fi-label{opacity:1;width:auto}
+  .sidebar.mini .ubadge{display:block}
   .sidebar.mini .nav-i{padding:9px 16px;justify-content:flex-start;border-left:2px solid transparent}
   .sidebar.mini .nav-i.active{border-left-color:var(--blue)}
   .sidebar.mini .fi-item{padding:7px 16px;justify-content:flex-start;border-left:2px solid transparent}
   .sb-toggle{display:none}
   .ham-btn{display:flex}
 
-  /* Main ocupa tela inteira */
+  /* ── MAIN ── */
   .main{width:100%;min-height:100vh}
 
-  /* Topbar filial compacta */
-  #fil-topbar{padding:0 10px;height:auto;min-height:52px;flex-wrap:wrap;gap:6px;padding-top:6px;padding-bottom:6px}
-  #fil-topbar>div:first-child{flex-wrap:wrap;gap:6px}
-  #fil-topbar>div:last-child{flex-wrap:wrap;gap:4px}
-  #fil-topbar .btn{padding:5px 9px;font-size:11px}
+  /* ── TOPBAR FILIAL COMPACTA ── */
+  #fil-topbar{
+    padding:6px 10px;height:auto;min-height:52px;
+    flex-wrap:wrap;gap:6px
+  }
+  #fil-topbar>div:first-child{flex-wrap:wrap;gap:6px;align-items:center}
+  #fil-topbar>div:last-child{flex-wrap:wrap;gap:4px;width:100%;justify-content:flex-end}
+  #fil-topbar .btn{padding:6px 10px;font-size:11px;min-height:36px}
+  #dash-topbar{padding:0 10px}
+  #dash-topbar .ocultar-btn{font-size:11px;padding:5px 9px;min-height:36px}
 
-  /* Tabs com scroll */
-  .tabs{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  /* ── TABS ── */
+  .tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
   .tab{white-space:nowrap;padding:12px 14px;font-size:12px}
 
-  /* Conteúdo das páginas */
-  .page{padding:12px!important}
+  /* ── PÁGINAS ── */
+  .pg{padding:12px!important}
 
-  /* Dashboard */
+  /* ── DASHBOARD ── */
   #dash-stats{grid-template-columns:repeat(2,1fr)!important}
   #dash-cards{grid-template-columns:1fr!important}
 
-  /* Cards de checklist/relatorio */
-  .page [style*="grid-template-columns:repeat(3"]{grid-template-columns:1fr!important}
-  .page [style*="grid-template-columns:repeat(4"]{grid-template-columns:repeat(2,1fr)!important}
+  /* Grids dinâmicos */
+  .pg [style*="grid-template-columns:repeat(3"]{grid-template-columns:1fr!important}
+  .pg [style*="grid-template-columns:repeat(4"]{grid-template-columns:repeat(2,1fr)!important}
 
-  /* Tabelas com scroll horizontal */
-  table{min-width:600px}
+  /* ── TABELAS COM SCROLL ── */
   .card{overflow-x:auto}
+  table{min-width:600px}
 
-  /* Modais */
-  .modal{width:96%!important;max-width:96%!important;padding:16px;margin:8px}
-  .modal-bg{align-items:flex-start;padding-top:16px}
+  /* ── MODAIS ── */
+  .modal-bg{align-items:flex-start;padding-top:12px}
+  .modal{width:96%!important;max-width:96%!important;padding:16px;margin:0 auto}
+  .modal [style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
 
-  /* Inputs e botões touch-friendly */
-  input,select,textarea,.btn,.btp,.btr{min-height:44px}
-  .btn{padding:8px 12px}
+  /* ── INPUTS E BOTÕES TOUCH-FRIENDLY (min 44px) ── */
+  input:not([type=color]),select,textarea{min-height:44px}
+  .btn,.btp,.btr,.btg{min-height:44px;padding:8px 12px}
   .ei{min-height:36px}
   .es{min-height:36px}
 
-  /* Formulários no modal — 1 coluna */
-  .modal [style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
-  .modal .fr{grid-column:1/-1}
-
-  /* Login card */
+  /* ── LOGIN ── */
   .login-card{width:92%;padding:24px}
 
-  /* Fonte menor para telas pequeníssimas */
+  /* ── TIPOGRAFIA ── */
   .fi-item,.nav-i{font-size:13px}
 }
 @media(max-width:480px){
   #dash-stats{grid-template-columns:repeat(2,1fr)!important}
   #dash-cards{grid-template-columns:1fr!important}
   .tab{padding:10px 11px;font-size:11px}
+  #fil-topbar>div:last-child{gap:3px}
+  #fil-topbar .btn{font-size:10px;padding:5px 7px}
 }
 </style></head><body>
 
@@ -511,6 +527,7 @@ input[type=date],input[type=month]{color-scheme:dark}
     <div class="fr" style="grid-column:1/-1"><label>Coordenador responsável</label><select id="nf-resp" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:var(--bg3);color:var(--text)"></select></div>
     <div class="fr"><label>Orçamento (R$)</label><input type="text" id="nf-orc" placeholder="60000"></div>
     <div class="fr"><label>Previsão de abertura (mês/ano)</label><input type="month" id="nf-prev" min="2025-01" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:var(--bg3);color:var(--text)"></div>
+    <div class="fr" style="grid-column:1/-1"><label>Cor da filial</label><div style="display:flex;align-items:center;gap:10px"><input type="color" id="nf-cor" value="#9b6ff7" style="width:48px;height:38px;padding:2px;border:1px solid var(--border);border-radius:7px;background:var(--bg3);cursor:pointer"><span style="font-size:11px;color:var(--text2)">Usada na barra de progresso e ponto lateral</span></div></div>
   </div>
   <div style="font-size:11px;color:var(--text2);padding:8px 10px;background:var(--bg3);border-radius:7px;margin-bottom:14px">Catálogo e cronograma padrão carregados automaticamente.</div>
   <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn" onclick="hideMod('nova')">Cancelar</button><button class="btn btp" onclick="criarFilial()">Criar filial</button></div>
@@ -524,6 +541,7 @@ input[type=date],input[type=month]{color-scheme:dark}
     <div class="fr" style="grid-column:1/-1"><label>Coordenador responsável</label><select id="ef-resp" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:var(--bg3);color:var(--text)"></select></div>
     <div class="fr"><label>Orçamento (R$)</label><input type="text" id="ef-orc"></div>
     <div class="fr"><label>Previsão de abertura (mês/ano)</label><input type="month" id="ef-prev" min="2025-01" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:var(--bg3);color:var(--text)"></div>
+    <div class="fr" style="grid-column:1/-1"><label>Cor da filial</label><div style="display:flex;align-items:center;gap:10px"><input type="color" id="ef-cor" value="#4f8ef7" style="width:48px;height:38px;padding:2px;border:1px solid var(--border);border-radius:7px;background:var(--bg3);cursor:pointer"><span style="font-size:11px;color:var(--text2)">Usada na barra de progresso e ponto lateral</span></div></div>
   </div>
   <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn" onclick="hideMod('edit-filial')">Cancelar</button><button class="btn btp" onclick="salvarEditFilial()">Salvar alterações</button></div>
 </div></div>
@@ -621,108 +639,8 @@ let usuarios=[];
 let filiaisAbertura=[];
 let filiaisAtivas=[];
 
-let catalogoItens=[
-  {cat:'COZINHA',nome:'GELADEIRA BRASTEMP FROST FREE DUPLEX 375L COMPARTIMENTO EXTRAFRIO - BRM44HK',qtd:1,obs:'Validar voltagem'},
-  {cat:'COZINHA',nome:'MICROONDAS',qtd:1,obs:''},{cat:'COZINHA',nome:'BEBEDOURO IBBL (PEQUENO)',qtd:1,obs:''},
-  {cat:'COZINHA',nome:'SUPORTE DE PAREDE BEBEDOURO',qtd:1,obs:''},{cat:'COZINHA',nome:'SUPORTE DE PAREDE MICROONDAS',qtd:1,obs:''},
-  {cat:'COZINHA',nome:'MESA REFEITÓRIO C/ CADEIRAS',qtd:1,obs:''},{cat:'COZINHA',nome:'GARRAFA TERMICA CAFÉ',qtd:2,obs:''},
-  {cat:'COZINHA',nome:'CHALEIRA',qtd:1,obs:''},{cat:'COZINHA',nome:'JOGO DE TALHERES',qtd:1,obs:''},{cat:'COZINHA',nome:'JOGO DE PRATOS',qtd:1,obs:''},
-  {cat:'COZINHA',nome:'MESA DE CAFÉ',qtd:1,obs:''},{cat:'COZINHA',nome:'LIXEIRA COZINHA / BANHEIRO 15L',qtd:2,obs:''},
-  {cat:'COZINHA',nome:'SUPORTE DE COPOS PAREDE',qtd:1,obs:''},{cat:'COZINHA',nome:'LIXO DE COPOS CHÃO',qtd:1,obs:''},
-  {cat:'COZINHA',nome:'KIT BANDEJA E POTE BOLACHA DE FIBRA DE BAMBU',qtd:1,obs:''},{cat:'COZINHA',nome:'CONJUNTO DE MANTIMENTOS CAFÉ E AÇUCAR',qtd:1,obs:''},{cat:'COZINHA',nome:'JARRA PARA SUCO',qtd:2,obs:''},
-  {cat:'ESTOQUE',nome:'BALANÇA 30KG 01UN',qtd:1,obs:''},{cat:'ESTOQUE',nome:'MONITOR',qtd:2,obs:''},{cat:'ESTOQUE',nome:'CPU',qtd:2,obs:''},
-  {cat:'ESTOQUE',nome:'TECLADO',qtd:2,obs:''},{cat:'ESTOQUE',nome:'MOUSE',qtd:2,obs:''},{cat:'ESTOQUE',nome:'ESTABILIZADOR',qtd:2,obs:''},
-  {cat:'ESTOQUE',nome:'LEITOR DE CÓDIGO DE BARRAS LASER SEM FIO',qtd:2,obs:''},{cat:'ESTOQUE',nome:'IMPRESSORA ZEBRA',qtd:2,obs:''},
-  {cat:'ESTOQUE',nome:'IMPRESSORA EPSON',qtd:2,obs:''},{cat:'ESTOQUE',nome:'BAIA DE GARANTIA 01 UN',qtd:1,obs:''},
-  {cat:'ESTOQUE',nome:'BAIA DE PEDIDOS',qtd:2,obs:''},{cat:'ESTOQUE',nome:'MESA DE CONFERENCIA',qtd:1,obs:''},
-  {cat:'ESTOQUE',nome:'ARMARIOS DUAS PORTA - PA 90',qtd:2,obs:''},{cat:'ESTOQUE',nome:'TELEVISÃO 55\'\' LG',qtd:1,obs:''},
-  {cat:'ESTOQUE',nome:'CELULAR',qtd:1,obs:''},{cat:'ESTOQUE',nome:'TORRE CARREGAMENTO CELULAR',qtd:1,obs:''},
-  {cat:'ESTOQUE',nome:'MAQUINA MANUAL AUTOMATICA DE ARQUEAR',qtd:1,obs:''},{cat:'ESTOQUE',nome:'BRAÇOS PARA TELA DE COMPUTADOR 02UN',qtd:2,obs:''},
-  {cat:'ESTOQUE',nome:'NOOBREAK',qtd:2,obs:''},{cat:'ESTOQUE',nome:'SUPORTE DE FITA MESA',qtd:4,obs:''},
-  {cat:'ESTOQUE',nome:'IMPRESSORA HP',qtd:1,obs:''},{cat:'ESTOQUE',nome:'GERADOR',qtd:1,obs:''},
-  {cat:'ESTOQUE',nome:'EXTENSÃO CARRETEL 2,5mm',qtd:1,obs:''},{cat:'ESTOQUE',nome:'EXTENSÃO CARRETEL 4mm',qtd:1,obs:''},
-  {cat:'ESTOQUE',nome:'COLETOR ZEBRA INVENTÁRIO',qtd:1,obs:''},{cat:'ESTOQUE',nome:'PALETEIRAS',qtd:2,obs:''},
-  {cat:'ESTOQUE',nome:'TABLET DE PONTO',qtd:1,obs:''},{cat:'ESTOQUE',nome:'SELADORA DE CORTE',qtd:1,obs:''},
-  {cat:'ESTOQUE',nome:'SELADORA DE SERRILHADA',qtd:1,obs:''},{cat:'ESTOQUE',nome:'LIXEIRA 50L',qtd:3,obs:''},
-  {cat:'ESTOQUE',nome:'LIXEIRA 100L',qtd:2,obs:''},{cat:'ESTOQUE',nome:'ESTILETE OLFA INOX',qtd:4,obs:''},
-  {cat:'ESTOQUE',nome:'VAP (LAVADORA DE ALTA PRESSÃO)',qtd:1,obs:''},{cat:'ESTOQUE',nome:'SABONETEIRA',qtd:2,obs:''},
-  {cat:'ESTOQUE',nome:'PORTA PAPEL HIGIENICO',qtd:2,obs:''},{cat:'ESTOQUE',nome:'CAIXAS ORGANIZADORAS 30L',qtd:4,obs:''},
-  {cat:'ESTOQUE',nome:'CESTO RATTAN 6L',qtd:8,obs:''},{cat:'ESTOQUE',nome:'GUILHOTINA SEMI INDUSTRIAL',qtd:1,obs:''},
-  {cat:'ESTOQUE',nome:'ESCADA 3 DEGRAUS',qtd:2,obs:''},{cat:'ESTOQUE',nome:'ESCADA 16 DEGRAUS',qtd:1,obs:''},
-  {cat:'ESTOQUE',nome:'ESCADA PLATAFORMA TREPADEIRA 4,0m 15 DEGRAUS',qtd:1,obs:''},{cat:'ESTOQUE',nome:'PRATELEIRA DE AÇO (COMPUTADOR)',qtd:2,obs:''},
-  {cat:'ESTOQUE',nome:'ACRILICO IDENTIFICAÇÃO COLMÉIA 6CM x 30CM',qtd:300,obs:''},{cat:'ESTOQUE',nome:'MALETTA FERRAMENTAS MAYLE 110 PEÇAS',qtd:1,obs:''},
-  {cat:'ESTOQUE',nome:'MANGUEIRA 30m TRAMONTINA 1/2',qtd:1,obs:''},{cat:'ESTOQUE',nome:'CANALETA PROTETOR CABOS FIOS',qtd:10,obs:''},
-  {cat:'ESTRUTURAL',nome:'ARMÁRIO PARA FUNCIONARIOS 08 PORTAS',qtd:1,obs:''},{cat:'ESTRUTURAL',nome:'ELETROCALHA 100X50',qtd:36,obs:''},
-  {cat:'ESTRUTURAL',nome:'MÃO FRANCESA 30',qtd:108,obs:''},{cat:'ESTRUTURAL',nome:'PARAFUSO PHILIPS S10 COM BUCHA',qtd:220,obs:''},
-  {cat:'ESTRUTURAL',nome:'PARAFUSO CABEÇA LENTILHA FENDA 1/4 PARA ELETROCALHA',qtd:300,obs:''},
-  {cat:'ESTRUTURAL',nome:'EMENDA PERFURADA PARA ELETROCALHA',qtd:36,obs:''},{cat:'ESTRUTURAL',nome:'CANALETA ABERTA 30X30 CINZA 3M',qtd:10,obs:''},
-  {cat:'ESTRUTURAL',nome:'CAIXA SOBREPOR 2 TOMADAS 10A',qtd:5,obs:''},{cat:'ESTRUTURAL',nome:'CAIXA SOBREPOR 3 TOMADAS 20A',qtd:5,obs:''},
-  {cat:'ESTRUTURAL',nome:'ROLO DE FIO VERDE 2,5MM',qtd:1,obs:''},{cat:'ESTRUTURAL',nome:'ROLO DE FIO AZUL 2,5MM',qtd:1,obs:''},
-  {cat:'ESTRUTURAL',nome:'ROLO DE FIO VERMELHO 2,5MM',qtd:1,obs:''},{cat:'ESTRUTURAL',nome:'CONECTOR RJ45',qtd:40,obs:''},
-  {cat:'ESTRUTURAL',nome:'SWITCH (5-8 PORTAS)',qtd:1,obs:''},{cat:'ESTRUTURAL',nome:'RACK DE PAREDE PEQUENO',qtd:1,obs:''},
-  {cat:'ESTRUTURAL',nome:'CABO DE REDE CAT 6 CX C/305MT',qtd:1,obs:''},{cat:'ESTRUTURAL',nome:'MDF BRANCO LISO',qtd:17,obs:''},
-  {cat:'SEGURANÇA',nome:'CENTRAL DE ALARME',qtd:1,obs:''},{cat:'SEGURANÇA',nome:'ARMARIO DE CENTRAL DE CAMERAS',qtd:1,obs:''},
-  {cat:'SEGURANÇA',nome:'CENTRAL DE CÂMERAS DVR',qtd:1,obs:''},{cat:'SEGURANÇA',nome:'SWITCH (5 PORTAS)',qtd:1,obs:''},{cat:'SEGURANÇA',nome:'CAMERAS INTEL BRAS',qtd:12,obs:''},
-  {cat:'LOGISTICA',nome:'MOTO',qtd:2,obs:''},{cat:'LOGISTICA',nome:'CAPACETE MOTOBOY',qtd:2,obs:''},
-  {cat:'LOGISTICA',nome:'KIT EPI MOTOBOY',qtd:1,obs:''},{cat:'LOGISTICA',nome:'SUPORTE DE CELULAR PARA MOTO',qtd:1,obs:''},
-  {cat:'LOGISTICA',nome:'MAQUINHA CIELO',qtd:3,obs:''},{cat:'LOGISTICA',nome:'CARREGADOR DE BATERIA',qtd:1,obs:''},{cat:'LOGISTICA',nome:'BAÚ GIVI 27lts',qtd:1,obs:''},
-  {cat:'MONTAGEM ESTRUTURA',nome:'CANO 25MM',qtd:70,obs:'Metros'},{cat:'MONTAGEM ESTRUTURA',nome:'FACHADA',qtd:1,obs:''},
-  {cat:'REDE',nome:'STARLINK',qtd:1,obs:''},
-  {cat:'PAPELARIA',nome:'GRAMPEADOR',qtd:2,obs:''},{cat:'PAPELARIA',nome:'GRAMPO 26/6 GALVANIZADO C/5.000',qtd:6,obs:''},
-  {cat:'PAPELARIA',nome:'MARCA TEXTO COLORIDA',qtd:48,obs:''},{cat:'PAPELARIA',nome:'PINCEL ATOMICO AZUL',qtd:2,obs:''},
-  {cat:'PAPELARIA',nome:'REGUA DE METAL',qtd:1,obs:''},{cat:'PAPELARIA',nome:'PAPEL A4 COLORIDO',qtd:4,obs:''},
-  {cat:'PAPELARIA',nome:'TESOURA GRANDE',qtd:1,obs:''},{cat:'PAPELARIA',nome:'POSTITE 50X50',qtd:10,obs:''},
-  {cat:'PAPELARIA',nome:'PRANCHETA',qtd:4,obs:''},{cat:'PAPELARIA',nome:'CANETA FIXA',qtd:1,obs:''},
-  {cat:'PAPELARIA',nome:'RESMA PAPEL A4',qtd:20,obs:''},{cat:'PAPELARIA',nome:'RECARGA TONER 103AD',qtd:4,obs:''},
-  {cat:'PAPELARIA',nome:'CARTUCHO DE CILINDRO HP 104A W1104A',qtd:3,obs:''},
-  {cat:'MATERIAL ESTOQUE',nome:'FITA ADESIVA TRANSP. 45MMx100',qtd:30,obs:''},{cat:'MATERIAL ESTOQUE',nome:'STRETCH',qtd:10,obs:''},
-  {cat:'MATERIAL ESTOQUE',nome:'RIBBON ZEBRA 110MM 74M',qtd:1,obs:'Verificar quantidade'},
-  {cat:'MATERIAL ESTOQUE',nome:'ETIQUETA ZEBRA 50X30MM',qtd:10,obs:''},{cat:'MATERIAL ESTOQUE',nome:'ETIQUETA ZEBRA MASTER 100X150MM',qtd:10,obs:''},
-  {cat:'MATERIAL ESTOQUE',nome:'FITA PET 16MM ARQUEAR VERDE',qtd:1,obs:''},{cat:'MATERIAL ESTOQUE',nome:'BOBINA TERMICA 80MM EPSON',qtd:20,obs:''},
-  {cat:'MATERIAL ESTOQUE',nome:'FITA CREPE AMARELA',qtd:100,obs:''},{cat:'MATERIAL ESTOQUE',nome:'GRAMPO BOX P/ FECHAR CX 35/18',qtd:1,obs:''},
-  {cat:'MATERIAL ESTOQUE',nome:'FITA GOMADA',qtd:4,obs:''},{cat:'MATERIAL ESTOQUE',nome:'ETIQUETA - CUIDADO FRAGIL',qtd:1000,obs:''},
-  {cat:'LIMPEZA',nome:'ALCOOL',qtd:6,obs:''},{cat:'LIMPEZA',nome:'DESINFETANTE',qtd:10,obs:''},{cat:'LIMPEZA',nome:'DETERGENTE 500ML',qtd:10,obs:''},
-  {cat:'LIMPEZA',nome:'ESCOVA PARA LAVAR ROUPA',qtd:1,obs:''},{cat:'LIMPEZA',nome:'ESPONJA DUPLA FACE',qtd:4,obs:''},
-  {cat:'LIMPEZA',nome:'FLANELA MICRO FIBRA',qtd:5,obs:''},{cat:'LIMPEZA',nome:'KIT LUVAS DE LIMPEZA',qtd:2,obs:''},
-  {cat:'LIMPEZA',nome:'LIMPADOR MULTIUSO',qtd:1,obs:''},{cat:'LIMPEZA',nome:'PANO DE CHAO ALVEJADO',qtd:4,obs:''},
-  {cat:'LIMPEZA',nome:'PANO DE PRATO/LIMPEZA',qtd:2,obs:''},{cat:'LIMPEZA',nome:'PAPEL HIGIENICO ROLO EMPRESARIAL',qtd:16,obs:''},
-  {cat:'LIMPEZA',nome:'PAPEL TOALHA',qtd:4000,obs:'Folhas'},{cat:'LIMPEZA',nome:'SABAO EM PO 4KG',qtd:1,obs:''},
-  {cat:'LIMPEZA',nome:'SABONETE LIQUIDO 5L',qtd:10,obs:''},{cat:'LIMPEZA',nome:'SACO DE LIXO 100 LTS',qtd:2,obs:''},{cat:'LIMPEZA',nome:'SACO DE LIXO 40 LTS',qtd:2,obs:''},
-  {cat:'REFEITORIO',nome:'BISCOITO ROSQUINHA 600G',qtd:6,obs:''},{cat:'REFEITORIO',nome:'CAFÉ',qtd:5,obs:''},
-  {cat:'REFEITORIO',nome:'COPO CAFÉ PCT C/100',qtd:25,obs:''},{cat:'REFEITORIO',nome:'COPO PP 200ML PCT C/100UN',qtd:30,obs:''},
-  {cat:'REFEITORIO',nome:'FILTRO P/ CAFÉ COM 30UN',qtd:5,obs:''},{cat:'REFEITORIO',nome:'LEITE INTEGRAL 1 LT',qtd:12,obs:''},
-  {cat:'REFEITORIO',nome:'MARGARINA',qtd:2,obs:''},{cat:'REFEITORIO',nome:'SUCO ENVELOPE',qtd:72,obs:''},
-];
-
-let cronPadrao=[
-  {d:'Escolha estratégica do galpão',dept:'COMERCIAL',prazo:7,deps:[]},
-  {d:'Processo de busca de galpão',dept:'OPERACIONAL',prazo:14,deps:[0]},
-  {d:'Visita no galpão selecionado',dept:'OPERACIONAL',prazo:3,deps:[1]},
-  {d:'Processo de negociação da locação',dept:'COMERCIAL',prazo:10,deps:[2]},
-  {d:'Verificação do IPTU',dept:'CONTABILIDADE',prazo:5,deps:[3]},
-  {d:'Contrato do galpão',dept:'COMPRAS',prazo:7,deps:[4]},
-  {d:'Iniciar processo de compras e transferências',dept:'OPERACIONAL',prazo:30,deps:[0]},
-  {d:'Vistoria externa do galpão',dept:'COMPRAS',prazo:2,deps:[5]},
-  {d:'Abertura do CNPJ',dept:'CONTABILIDADE',prazo:15,deps:[5]},
-  {d:'Inscrição Estadual (IE)',dept:'CONTABILIDADE',prazo:10,deps:[8]},
-  {d:'Certificado Digital',dept:'FINANCEIRO',prazo:5,deps:[8]},
-  {d:'Abertura de Conta Bancária',dept:'FINANCEIRO',prazo:7,deps:[8]},
-  {d:'Abertura de Conta Cielo',dept:'FINANCEIRO',prazo:3,deps:[11]},
-  {d:'Solicitação de Máquina de Cartão',dept:'FINANCEIRO',prazo:5,deps:[12]},
-  {d:'Criação de API',dept:'FINANCEIRO',prazo:3,deps:[11]},
-  {d:'Licença Winthor',dept:'FINANCEIRO',prazo:5,deps:[11]},
-  {d:'Envio da Primeira Carga',dept:'OPERACIONAL',prazo:7,deps:[6]},
-  {d:'Processo de Montagem da Infraestrutura',dept:'OPERACIONAL',prazo:14,deps:[7]},
-  {d:'Abertura do Processo Seletivo',dept:'RECRUTAMENTO',prazo:21,deps:[5]},
-  {d:'Envio da Segunda Carga',dept:'OPERACIONAL',prazo:7,deps:[16]},
-  {d:'Início do Abastecimento do Estoque',dept:'OPERACIONAL',prazo:3,deps:[19]},
-  {d:'Teste de Pedidos da Filial',dept:'COMERCIAL',prazo:2,deps:[20]},
-  {d:'Alvará e Licenças',dept:'CONTABILIDADE',prazo:30,deps:[8]},
-  {d:'Cadastro Nova Filial Sistema',dept:'SUPORTE',prazo:2,deps:[8]},
-  {d:'Liberação de Acessos e Parametrização',dept:'SUPORTE',prazo:3,deps:[23]},
-  {d:'Enquadramento e Parametrização Tributária',dept:'CONTABILIDADE',prazo:5,deps:[9]},
-  {d:'Parametrização da Tabela de Preço',dept:'COMERCIAL',prazo:2,deps:[24]},
-];
+let catalogoItens=[];
+let cronPadrao=[];
 
 let dados={};
 
@@ -839,13 +757,14 @@ function doLogout(){currentUser=null;currentFid=null;document.getElementById('ma
 function getCoords(){return usuarios.filter(u=>u.perfil==='coordenador');}
 
 async function carregarTodosDados() {
-  const [filDb, tarDb, compDb, usrDb, faDb, cpDb] = await Promise.all([
+  const [filDb, tarDb, compDb, usrDb, faDb, cpDb, catDb] = await Promise.all([
     sbFetch('/rest/v1/filiais?select=*'),
     sbFetch('/rest/v1/tarefas?select=*'),
     sbFetch('/rest/v1/compras?select=*'),
     sbFetch('/rest/v1/usuarios_app?select=*'),
     sbFetch('/rest/v1/filiais_ativas?select=*'),
-    sbFetch('/rest/v1/cron_padrao?select=*&order=ordem.asc')
+    sbFetch('/rest/v1/cron_padrao?select=*&order=ordem.asc'),
+    sbFetch('/rest/v1/catalogo?select=*&order=categoria.asc,nome.asc')
   ]);
 
   filiaisAbertura = (filDb||[]).map(f => ({
@@ -885,6 +804,10 @@ async function carregarTodosDados() {
     cronPadrao=cpDb.map(t=>({d:t.descricao,dept:t.dept,prazo:t.prazo||7,deps:Array.isArray(t.deps)?t.deps:[],ordem:t.ordem||999,_id:t.id}));
     cronPadrao.sort((a,b)=>a.ordem-b.ordem);
   }
+
+  if(catDb&&catDb.length){
+    catalogoItens=catDb.map(c=>({cat:c.categoria,nome:c.nome,qtd:c.qtd||1,obs:c.obs||'',_id:c.id}));
+  }
 }
 
 function initApp(){
@@ -906,9 +829,8 @@ function temAtraso(fid){return(dados[fid]?.tarefas||[]).some(t=>t.s==='ATRASO');
 
 function buildSidebarFiliais(){
   document.getElementById('sidebar-filiais').innerHTML=getFiliaisVisiveis().map(f=>{
-    const si=filialStatusInfo(f.id);
     return`<div class="fi-item" id="fi-${f.id}" onclick="selFil('${f.id}')" title="${f.nome}">
-      <span class="dot" style="background:${si.color}"></span>
+      <span class="dot" style="background:${f.cor||'#4f8ef7'}"></span>
       <span class="fi-label">${f.nome}${temAtraso(f.id)?' <span style="color:var(--red)">⚠</span>':''}</span>
     </div>`;
   }).join('');
@@ -1156,17 +1078,20 @@ function showModEditFilial(){
   const fil=filiaisAbertura.find(f=>f.id===currentFid);if(!fil)return;
   document.getElementById('ef-nome').value=fil.nome;document.getElementById('ef-cidade').value=fil.uf;
   document.getElementById('ef-uf').value=fil.uf;document.getElementById('ef-orc').value=fil.orc;document.getElementById('ef-prev').value=fil.prevAbertura||'';
+  document.getElementById('ef-cor').value=fil.cor||'#4f8ef7';
   document.getElementById('ef-resp').innerHTML=`<option value="">Sem responsável</option>`+getCoords().map(u=>`<option value="${u.u}"${u.u===fil.respUser?' selected':''}>${u.nome}</option>`).join('');
   showMod('edit-filial');
 }
-function salvarEditFilial(){
+async function salvarEditFilial(){
   const fil=filiaisAbertura.find(f=>f.id===currentFid);if(!fil)return;
   const respUser=document.getElementById('ef-resp').value;
   fil.nome=document.getElementById('ef-nome').value.trim()||fil.nome;fil.uf=document.getElementById('ef-uf').value.trim()||fil.uf;
   fil.orc=parseFloat((document.getElementById('ef-orc').value||'').replace(',','.'))||fil.orc;
   fil.prevAbertura=document.getElementById('ef-prev').value||fil.prevAbertura;
+  fil.cor=document.getElementById('ef-cor').value||fil.cor;
   fil.resp=getCoords().find(u=>u.u===respUser)?.nome||'—';fil.respUser=respUser;
   if(respUser){const coord=usuarios.find(u=>u.u===respUser);if(coord)coord.filial=currentFid;}
+  await sbFetch(`/rest/v1/filiais?id=eq.${currentFid}`,{method:'PATCH',body:JSON.stringify({nome:fil.nome,uf:fil.uf,orc:fil.orc,prev_abertura:fil.prevAbertura,cor:fil.cor,resp:fil.resp,resp_user:fil.respUser})});
   addH(currentUser.nome,`Editou dados da filial ${fil.nome}`);
   hideMod('edit-filial');
   document.getElementById('fil-title').textContent=fil.nome;
@@ -1317,9 +1242,8 @@ async function salvarUsuario(){
     if(!p){alert('Informe a senha.');return;}
     if(usuarios.find(x=>x.u===u)){alert('Usuário já existe.');return;}
     const r=await sbFetch('/rest/v1/usuarios_app',{method:'POST',body:JSON.stringify({usuario:u,senha:p,nome,perfil,filial_id:filial})});
-    console.log('[salvarUsuario] retorno POST:', r);
-    if(!r||!r[0]){alert('Erro ao criar usuário. Verifique o console para detalhes.');return;}
-    const novo={u,p,nome,perfil,filial,_id:r[0].id};usuarios.push(novo);
+    if(!r||!r[0]){alert('Erro ao criar usuário. Verifique as permissões do Supabase.');return;}
+    usuarios.push({u,p,nome,perfil,filial,_id:r[0].id});
   } else {
     const usr=usuarios[idx];
     if(usuarios.find((x,i)=>x.u===u&&i!==idx)){alert('Usuário já existe.');return;}
@@ -1346,7 +1270,7 @@ async function criarFilial() {
   const respUser = document.getElementById('nf-resp').value;
   const respNome = getCoords().find(u=>u.u===respUser)?.nome||'—';
   const prev = document.getElementById('nf-prev').value;
-  const cor = '#9b6ff7';
+  const cor = document.getElementById('nf-cor').value || '#9b6ff7';
   const fil = {id, nome, uf: document.getElementById('nf-uf').value||'—', resp: respNome, respUser, orc, cor, prevAbertura: prev};
   await sbFetch('/rest/v1/filiais', { method: 'POST', body: JSON.stringify({ id, nome, uf: fil.uf, resp: respNome, resp_user: respUser, orc, cor, prev_abertura: prev }) });
   filiaisAbertura.push(fil);
