@@ -416,6 +416,7 @@ input[type=date],input[type=month]{color-scheme:dark}
       <select id="comp-fcat" onchange="filterComp()"><option value="">Todas categorias</option><option>COZINHA</option><option>ESTOQUE</option><option>MATERIAL ESTOQUE</option><option>PAPELARIA</option><option>LIMPEZA</option><option>REFEITORIO</option><option>LOGISTICA</option><option>ESTRUTURAL</option><option>SEGURANÇA</option><option>REDE</option><option>MONTAGEM ESTRUTURA</option><option>CUSTOS ADICIONAIS</option></select>
       <select id="comp-fst" onchange="filterComp()"><option value="">Todos status</option><option>PENDENTE</option><option>AGUARDANDO COMPRA</option><option>EM ANDAMENTO</option><option>TRANSFERÊNCIA</option><option>COMPRA REALIZADA</option><option>COMPRA PARALISADA</option><option>FINALIZADO</option></select>
       <select id="filtro-origem" onchange="filterComp()"><option value="">Todas origens</option></select>
+      <select id="filtro-solicitante" onchange="filterComp()"><option value="">Todos solicitantes</option></select>
       <select id="comp-fprior" onchange="filterComp()"><option value="">Todas prioridades</option><option>ALTA</option><option>MÉDIA</option><option>BAIXA</option></select>
       <div class="search-box"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" id="comp-busca" placeholder="Buscar item..." oninput="filterComp()" style="width:160px"></div>
       <div style="margin-left:auto;display:flex;gap:12px;font-size:12px">
@@ -860,7 +861,7 @@ function renderDash(){
     const t=dados[f.id]?.tarefas||[];const c=dados[f.id]?.compras||[];
     const fin=t.filter(x=>x.s==='FINALIZADO').length,at=t.filter(x=>x.s==='ATRASO').length;
     const pct=t.length?Math.round(fin/t.length*100):0,gasto=c.reduce((s,x)=>s+pv(x.v)*pv(x.q),0);
-    const cFin=c.filter(x=>x.ss==='FINALIZADO').length,cPct=c.length?Math.round(cFin/c.length*100):0;
+    const compFin=c.filter(x=>x.ss==='FINALIZADO').length,compPct=c.length?Math.round(compFin/c.length*100):0;
     const si=filialStatusInfo(f.id);
     return`<div class="card hoverable" onclick="selFil('${f.id}')" style="cursor:pointer">
       <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px">
@@ -870,8 +871,8 @@ function renderDash(){
       <div style="margin-bottom:10px">${prevPill(f.prevAbertura)}</div>
       <div style="font-size:11px;color:var(--text2);margin-bottom:4px;display:flex;justify-content:space-between"><span>Cronograma</span><span style="font-weight:600;color:var(--text)">${pct}%</span></div>
       <div class="pb" style="height:7px;margin-bottom:8px"><div class="pf" style="width:${pct}%;background:${f.cor}"></div></div>
-      <div style="font-size:11px;color:var(--text2);margin-bottom:4px;display:flex;justify-content:space-between"><span>Compras</span><span style="font-weight:600;color:var(--text)">${cPct}%</span></div>
-      <div class="pb" style="height:7px;margin-bottom:4px"><div class="pf" style="width:${cPct}%;background:var(--green)"></div></div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:4px;display:flex;justify-content:space-between"><span>Compras</span><span style="font-weight:600;color:var(--text)">${compPct}%</span></div>
+      <div class="pb" style="height:7px;margin-bottom:12px"><div class="pf" style="width:${compPct}%;background:var(--green)"></div></div>
       ${at>0?`<div style="font-size:11px;color:var(--red);margin-bottom:8px">⚠ ${at} tarefa${at>1?'s':''} em atraso</div>`:`<div style="height:8px"></div>`}
       <div style="display:flex;justify-content:space-between;font-size:11px;border-top:1px solid var(--border);padding-top:10px">
         <span style="color:var(--text2)">Gasto: <b style="color:var(--blue)">${mv(fmt(gasto)||'R$ 0')}</b></span>
@@ -935,9 +936,9 @@ function updCronPct(){const t=dados[currentFid]?.tarefas||[];const fin=t.filter(
 function fCron(dept,st,busca){let d=[...dados[currentFid]?.tarefas||[]];if(dept)d=d.filter(x=>x.dept===dept);if(st)d=d.filter(x=>x.s===st);if(busca)d=d.filter(x=>x.d.toLowerCase().includes(busca.toLowerCase()));return d;}
 
 // ── COMPRAS (colapsável por categoria) ──
-function populateFO(){const el=document.getElementById('filtro-origem');if(!el)return;el.innerHTML='<option value="">Todas origens</option>'+filiaisAtivas.map(f=>`<option value="${f.id}">${f.nome}</option>`).join('');}
-function fComp(cat,st,fo,busca,prior){let d=[...dados[currentFid]?.compras||[]];if(cat)d=d.filter(x=>x.cat===cat);if(st)d=d.filter(x=>x.ss===st);if(fo)d=d.filter(x=>x.fo===fo);if(busca)d=d.filter(x=>x.i.toLowerCase().includes(busca.toLowerCase()));if(prior)d=d.filter(x=>(x.prioridade||'BAIXA')===prior);return d;}
-function filterComp(){const cat=document.getElementById('comp-fcat')?.value||'';const st=document.getElementById('comp-fst')?.value||'';const fo=document.getElementById('filtro-origem')?.value||'';const busca=document.getElementById('comp-busca')?.value||'';const prior=document.getElementById('comp-fprior')?.value||'';renderComp(fComp(cat,st,fo,busca,prior));}
+function populateFO(){const el=document.getElementById('filtro-origem');if(!el)return;el.innerHTML='<option value="">Todas origens</option>'+filiaisAtivas.map(f=>`<option value="${f.id}">${f.nome}</option>`).join('');const es=document.getElementById('filtro-solicitante');if(!es)return;const sols=[...new Set((dados[currentFid]?.compras||[]).map(x=>x.sol).filter(Boolean))].sort();es.innerHTML='<option value="">Todos solicitantes</option>'+sols.map(s=>`<option>${s}</option>`).join('');}
+function fComp(cat,st,fo,busca,prior,sol){let d=[...dados[currentFid]?.compras||[]];if(cat)d=d.filter(x=>x.cat===cat);if(st)d=d.filter(x=>x.ss===st);if(fo)d=d.filter(x=>x.fo===fo);if(busca)d=d.filter(x=>x.i.toLowerCase().includes(busca.toLowerCase()));if(prior)d=d.filter(x=>(x.prioridade||'BAIXA')===prior);if(sol)d=d.filter(x=>x.sol===sol);return d;}
+function filterComp(){const cat=document.getElementById('comp-fcat')?.value||'';const st=document.getElementById('comp-fst')?.value||'';const fo=document.getElementById('filtro-origem')?.value||'';const busca=document.getElementById('comp-busca')?.value||'';const prior=document.getElementById('comp-fprior')?.value||'';const sol=document.getElementById('filtro-solicitante')?.value||'';renderComp(fComp(cat,st,fo,busca,prior,sol));}
 
 function renderComp(data){
   const fid=currentFid;const allComps=dados[fid]?.compras||[];data=data||allComps;
@@ -1011,13 +1012,15 @@ function updCS(ri,fid,val){
   const c=dados[fid].compras[ri];if(c._id)sbFetch(`/rest/v1/compras?id=eq.${c._id}`,{method:'PATCH',body:JSON.stringify({status_sol:val})});
   const row=document.getElementById(`comp-row-${ri}`);if(row)row.style.background=COMP_BG[val]||'transparent';
   const foCell=document.getElementById(`fo-${ri}`);
-  if(foCell){const isT=val==='TRANSFERÊNCIA';const foOpts=filiaisAtivas.map(f=>`<option value="${f.id}"${f.id===dados[fid].compras[ri].fo?' selected':''}>${f.nome}</option>`).join('');foCell.innerHTML=isT?`<select class="es" style="width:125px" onchange="dados['${fid}'].compras[${ri}].fo=this.value"><option value="">Selecionar...</option>${foOpts}</select>`:'<span style="color:var(--text3);font-size:10px">—</span>';}
+  if(foCell){const isT=val==='TRANSFERÊNCIA';const foOpts=filiaisAtivas.map(f=>`<option value="${f.id}"${f.id===dados[fid].compras[ri].fo?' selected':''}>${f.nome}</option>`).join('');foCell.innerHTML=isT?`<select class="es" style="width:125px" onchange="updFO(${ri},'${fid}',this.value)"><option value="">Selecionar...</option>${foOpts}</select>`:'<span style="color:var(--text3);font-size:10px">—</span>';}
   updTotais();updFin();calcNotifs();
 }
+function updFO(ri,fid,val){dados[fid].compras[ri].fo=val;const c=dados[fid].compras[ri];if(c._id)sbFetch(`/rest/v1/compras?id=eq.${c._id}`,{method:'PATCH',body:JSON.stringify({filial_origem:val})});}
 function updCPrior(ri,fid,val){dados[fid].compras[ri].prioridade=val;const c=dados[fid].compras[ri];if(c._id)sbFetch(`/rest/v1/compras?id=eq.${c._id}`,{method:'PATCH',body:JSON.stringify({prioridade:val})});}
 function edt(val,f,ri,fid){return`<span class="ed" onclick="se(this,'${f}',${ri},'${fid}')">${val||'<span style="color:var(--text3)">—</span>'}</span>`;}
 function se(el,f,ri,fid){if(ae)ce();ae={el,f,ri,fid};el.innerHTML=`<input class="ei" value="${dados[fid].compras[ri][f]||''}" style="min-width:70px" onblur="ce()" onkeydown="if(event.key==='Enter')ce();if(event.key==='Escape')xe()">`;el.querySelector('input').focus();}
-function ce(){if(!ae)return;const{el,f,ri,fid}=ae;const inp=el.querySelector('input');if(inp){const old=dados[fid].compras[ri][f],val=inp.value;dados[fid].compras[ri][f]=val;if(val!==old){addH(currentUser.nome,`Editou "${f}" de "${dados[fid].compras[ri].i}"`);const c=dados[fid].compras[ri];if(c._id)sbFetch(`/rest/v1/compras?id=eq.${c._id}`,{method:'PATCH',body:JSON.stringify({[f]:val})});}el.innerHTML=val||'<span style="color:var(--text3)">—</span>';updTotais();updFin();}ae=null;}
+const CE_DB={sol:'solicitante',fo:'filial_origem',v:'valor',q:'quantidade',dc:'dt_compra',de:'prev_entrega',o:'obs'};
+function ce(){if(!ae)return;const{el,f,ri,fid}=ae;const inp=el.querySelector('input');if(inp){const old=dados[fid].compras[ri][f],val=inp.value;dados[fid].compras[ri][f]=val;if(val!==old){addH(currentUser.nome,`Editou "${f}" de "${dados[fid].compras[ri].i}"`);const c=dados[fid].compras[ri];if(c._id)sbFetch(`/rest/v1/compras?id=eq.${c._id}`,{method:'PATCH',body:JSON.stringify({[CE_DB[f]||f]:val})});}el.innerHTML=val||'<span style="color:var(--text3)">—</span>';updTotais();updFin();}ae=null;}
 function xe(){if(!ae)return;const{el,f,ri,fid}=ae;el.innerHTML=dados[fid].compras[ri][f]||'<span style="color:var(--text3)">—</span>';ae=null;}
 function updTotais(){const c=dados[currentFid]?.compras||[];const tot=c.reduce((s,x)=>s+pv(x.v)*pv(x.q),0);const eg=document.getElementById('cg'),et=document.getElementById('ct');if(eg)eg.textContent=fmt(tot)||'—';if(et)et.textContent=fmt(tot)||'—';}
 
