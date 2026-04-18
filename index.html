@@ -860,6 +860,7 @@ function renderDash(){
     const t=dados[f.id]?.tarefas||[];const c=dados[f.id]?.compras||[];
     const fin=t.filter(x=>x.s==='FINALIZADO').length,at=t.filter(x=>x.s==='ATRASO').length;
     const pct=t.length?Math.round(fin/t.length*100):0,gasto=c.reduce((s,x)=>s+pv(x.v)*pv(x.q),0);
+    const cFin=c.filter(x=>x.ss==='FINALIZADO').length,cPct=c.length?Math.round(cFin/c.length*100):0;
     const si=filialStatusInfo(f.id);
     return`<div class="card hoverable" onclick="selFil('${f.id}')" style="cursor:pointer">
       <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px">
@@ -868,8 +869,10 @@ function renderDash(){
       </div>
       <div style="margin-bottom:10px">${prevPill(f.prevAbertura)}</div>
       <div style="font-size:11px;color:var(--text2);margin-bottom:4px;display:flex;justify-content:space-between"><span>Cronograma</span><span style="font-weight:600;color:var(--text)">${pct}%</span></div>
-      <div class="pb" style="height:7px;margin-bottom:4px"><div class="pf" style="width:${pct}%;background:${f.cor}"></div></div>
-      ${at>0?`<div style="font-size:11px;color:var(--red);margin-bottom:8px">⚠ ${at} tarefa${at>1?'s':''} em atraso</div>`:`<div style="height:19px"></div>`}
+      <div class="pb" style="height:7px;margin-bottom:8px"><div class="pf" style="width:${pct}%;background:${f.cor}"></div></div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:4px;display:flex;justify-content:space-between"><span>Compras</span><span style="font-weight:600;color:var(--text)">${cPct}%</span></div>
+      <div class="pb" style="height:7px;margin-bottom:4px"><div class="pf" style="width:${cPct}%;background:var(--green)"></div></div>
+      ${at>0?`<div style="font-size:11px;color:var(--red);margin-bottom:8px">⚠ ${at} tarefa${at>1?'s':''} em atraso</div>`:`<div style="height:8px"></div>`}
       <div style="display:flex;justify-content:space-between;font-size:11px;border-top:1px solid var(--border);padding-top:10px">
         <span style="color:var(--text2)">Gasto: <b style="color:var(--blue)">${mv(fmt(gasto)||'R$ 0')}</b></span>
         <span style="color:var(--text2)">Orç.: <b style="color:var(--text)">${mv('R$ '+(f.orc/1000).toFixed(0)+'k')}</b></span>
