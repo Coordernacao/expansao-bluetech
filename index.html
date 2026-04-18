@@ -151,6 +151,8 @@ input[type=date],input[type=month]{color-scheme:dark}
 .ocultar-btn:hover{color:var(--text)}
 .btn-del{width:26px;height:26px;border-radius:6px;border:none;background:transparent;cursor:pointer;color:var(--text3);display:flex;align-items:center;justify-content:center;transition:all .15s;padding:0}
 .btn-del:hover{background:rgba(255,88,88,.15);color:var(--red)}
+.mob-comp-card{background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:12px;margin-bottom:8px;position:relative}
+.mob-cron-card{border-radius:9px;padding:12px;margin-bottom:6px;position:relative}
 .user-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--border);transition:background .15s}
 .user-row:hover{background:var(--bg3)}.user-row:last-child{border:none}
 .user-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
@@ -244,7 +246,11 @@ input[type=date],input[type=month]{color-scheme:dark}
   input:not([type=color]),select,textarea{min-height:44px}
   .btn,.btp,.btr,.btg{min-height:44px;padding:8px 12px}
   .ei{min-height:36px}
-  .es{min-height:36px}
+  .es{min-height:44px!important}
+  /* ── FILTROS EM GRID 2 COLUNAS ── */
+  .fbar{display:grid!important;grid-template-columns:1fr 1fr;gap:7px;align-items:start}
+  .fbar .search-box{grid-column:1/-1}
+  .fbar>div:last-child{grid-column:1/-1}
 
   /* ── LOGIN ── */
   .login-card{width:92%;padding:24px}
@@ -403,10 +409,11 @@ input[type=date],input[type=month]{color-scheme:dark}
     </div>
     <div id="cron-alert" class="alert-bar hidden">⚠ Existem tarefas em atraso!</div>
     <div class="card" style="padding:0;overflow:hidden;overflow-x:auto">
-      <table style="min-width:920px">
+      <table id="cron-table" style="min-width:920px">
         <thead><tr><th style="width:28px;text-align:center">#</th><th style="width:26%">Descrição</th><th>Depto</th><th>Paralela com</th><th>Status</th><th>Início</th><th>Prazo</th><th>Prev. entrega</th><th>Situação</th><th>Obs.</th><th id="th-del-cron" style="display:none"></th></tr></thead>
         <tbody id="cron-body"></tbody>
       </table>
+      <div id="cron-cards" style="display:none;padding:8px"></div>
     </div>
   </div>
 
@@ -900,12 +907,32 @@ function renderCron(data){
   document.getElementById('cron-alert').classList.toggle('hidden',!at);
   const thDel=document.getElementById('th-del-cron');if(thDel)thDel.style.display=isG?'table-cell':'none';
 
-  document.getElementById('cron-body').innerHTML=data.map(t=>{
+  const isMobCron=window.innerWidth<768;
+  const cronTable=document.getElementById('cron-table'),cronCards=document.getElementById('cron-cards');
+  if(cronTable)cronTable.style.display=isMobCron?'none':'table';
+  if(cronCards)cronCards.style.display=isMobCron?'block':'none';
+  const cronRows=data.map(t=>{
     const ri=tarefas.indexOf(t),ep=calcPrev(tarefas,ri),dias=ep?diasDiff(ep):null;
     const dc=dias===null?'var(--text3)':dias<0?'var(--red)':dias<=3?'var(--amber)':'var(--green)';
     const dt=dias===null?'—':dias<0?`Atraso ${Math.abs(dias)}d`:dias===0?'Vence hoje':`${dias}d`;
     const pars=t.deps&&t.deps.length?t.deps.map(d=>`<span style="font-size:9px;background:rgba(79,142,247,.1);color:var(--blue);padding:1px 5px;border-radius:4px;margin-right:2px">${tarefas[d]?.d?.substring(0,12)||d}...</span>`).join(''):'<span style="color:var(--text3);font-size:10px">—</span>';
     const sopts=SCRON.map(o=>`<option${o===t.s?' selected':''}>${o}</option>`).join('');
+    if(isMobCron)return`<div class="mob-cron-card" style="background:${CRON_BG[t.s]||'transparent'};opacity:${t.s==='FINALIZADO'?.75:1}">
+      <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px">
+        <div><span style="font-size:10px;color:var(--text3);font-weight:700;margin-right:6px">${ri+1}</span><span style="font-size:13px;font-weight:600">${t.d}</span></div>
+        ${isG?`<button class="btn-del" onclick="delTarefa(${ri},'${fid}')" title="Excluir">${TRASH}</button>`:''}
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+        ${deptTag(t.dept)}
+        ${canEdit?`<select class="es" style="flex:1;min-width:0" onchange="updCron(${ri},this.value)">${sopts}</select>`:sb(t.s)}
+        <span style="font-weight:600;font-size:11px;color:${dc}">${dt}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px;margin-bottom:${canEdit||t.o?'8':'0'}px">
+        <div style="color:var(--text2)"><div style="margin-bottom:3px">Início</div>${canEdit?`<input class="ei" type="date" value="${t.inicio||''}" min="2025-01-01" style="width:100%;color-scheme:${isDark?'dark':'light'}" onchange="updCronInicio(${ri},this.value,'${fid}')">`:fmtDate(t.inicio)}</div>
+        <div style="color:var(--text2)"><div style="margin-bottom:3px">Prazo (dias)</div>${canEdit?`<input class="ei" type="number" value="${t.prazo||''}" style="width:100%" onchange="dados['${fid}'].tarefas[${ri}].prazo=this.value;renderCron()">`:t.prazo||'—'}</div>
+      </div>
+      ${canEdit||t.o?`<div style="font-size:11px;color:var(--text2)">${canEdit?`<input class="ei" value="${t.o||''}" placeholder="Observação..." style="width:100%;border-color:transparent;background:transparent" onfocus="this.style.borderColor='var(--blue)';this.style.background='var(--bg3)'" onblur="dados['${fid}'].tarefas[${ri}].o=this.value;this.style.borderColor='transparent';this.style.background='transparent'">`:t.o}</div>`:''}
+    </div>`;
     return`<tr style="background:${CRON_BG[t.s]||'transparent'};opacity:${t.s==='FINALIZADO'?.75:1}">
     <td style="color:var(--text3);font-size:11px;text-align:center;font-weight:600">${ri+1}</td>
     <td style="font-size:12px">${t.d}</td>
@@ -920,6 +947,8 @@ function renderCron(data){
     ${isG?`<td><button class="btn-del" onclick="delTarefa(${ri},'${fid}')" title="Excluir">${TRASH}</button></td>`:'<td style="display:none"></td>'}
     </tr>`;
   }).join('');
+  if(isMobCron){if(cronCards)cronCards.innerHTML=cronRows;}
+  else{document.getElementById('cron-body').innerHTML=cronRows;}
   updCronPct();rChk();buildSidebarFiliais();calcNotifs();
 }
 
@@ -969,13 +998,47 @@ function renderComp(data){
 
     const tblWrap=document.createElement('div');
     tblWrap.style.display=isOpen?'block':'none';
-    tblWrap.style.overflowX='auto';
-
-    const tbl=document.createElement('table');
-    tbl.style.minWidth='1050px';
+    const isMob=window.innerWidth<768;
     const solOpts=usuarios.map(u=>`<option value="${u.nome}">${u.nome}</option>`).join('');
     const PRIOR_COLOR={'ALTA':'var(--red)','MÉDIA':'var(--amber)','BAIXA':'var(--text3)'};
-    tbl.innerHTML=`<thead><tr><th>Item</th><th>Qtd</th><th>Prioridade</th><th>Status</th><th>Filial origem</th><th>Solicitante</th><th>Dt. Compra</th><th style="color:var(--blue)">Prev. Entrega</th><th>Valor unit.</th><th>Total</th><th>Obs.</th>${isG?'<th></th>':''}</tr></thead>
+    if(isMob){
+      tblWrap.style.padding='8px';
+      tblWrap.innerHTML=itens.map(c=>{
+        const ri=allComps.indexOf(c);
+        const tot=pv(c.v)*pv(c.q);
+        const foOpts=filiaisAtivas.map(f=>`<option value="${f.id}"${f.id===c.fo?' selected':''}>${f.nome}</option>`).join('');
+        const isT=c.ss==='TRANSFERÊNCIA';
+        const deAtrasada=c.de&&c.ss!=='FINALIZADO'&&diasDiff(c.de)<0;
+        return`<div class="mob-comp-card" id="comp-row-${ri}" style="background:${COMP_BG[c.ss]||'transparent'}">
+          <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px">
+            <div style="font-size:14px;font-weight:600;flex:1;padding-right:8px">${edt(c.i,'i',ri,fid)}</div>
+            ${isG?`<button class="btn-del" onclick="delItemComp(${ri},'${fid}')" title="Excluir">${TRASH}</button>`:''}
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+            <span style="font-size:12px;color:var(--text2)">Qtd: <b>${edt(c.q,'q',ri,fid)}</b></span>
+            <select class="es" onchange="updCPrior(${ri},'${fid}',this.value)" style="color:${PRIOR_COLOR[c.prioridade||'BAIXA']};font-weight:600"><option${(c.prioridade||'BAIXA')==='ALTA'?' selected':''}>ALTA</option><option${(c.prioridade||'BAIXA')==='MÉDIA'?' selected':''}>MÉDIA</option><option${(c.prioridade||'BAIXA')==='BAIXA'?' selected':''}>BAIXA</option></select>
+            <select class="es" style="flex:1;min-width:0" onchange="updCS(${ri},'${fid}',this.value)">${SSEL.map(o=>`<option${o===c.ss?' selected':''}>${o}</option>`).join('')}</select>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px;margin-bottom:8px">
+            <div style="color:var(--text2)"><div style="margin-bottom:3px">Solicitante</div><select class="es" style="width:100%" onchange="updSol(${ri},'${fid}',this.value)"><option value="">—</option>${solOpts.replace(`value="${c.sol}"`,`value="${c.sol}" selected`)}</select></div>
+            <div id="fo-${ri}" style="color:var(--text2)"><div style="margin-bottom:3px">Filial origem</div>${isT?`<select class="es" style="width:100%" onchange="updFO(${ri},'${fid}',this.value)"><option value="">Selecionar...</option>${foOpts}</select>`:`<b style="color:var(--text)">${filiaisAtivas.find(f=>f.id===c.fo)?.nome||'—'}</b>`}</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px;margin-bottom:8px">
+            <div style="color:var(--text2)"><div style="margin-bottom:3px">Dt. Compra</div><input class="ei" type="date" value="${c.dc||''}" min="2025-01-01" style="width:100%;color-scheme:${isDark?'dark':'light'}" onchange="dados['${fid}'].compras[${ri}].dc=this.value"></div>
+            <div style="color:var(--text2)"><div style="margin-bottom:3px${deAtrasada?';color:var(--red)':''}">Prev. Entrega</div><input class="ei" type="date" value="${c.de||''}" min="2025-01-01" style="width:100%;color-scheme:${isDark?'dark':'light'};${deAtrasada?'border-color:var(--red);color:var(--red)':''}" onchange="dados['${fid}'].compras[${ri}].de=this.value;renderComp()"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px${c.o?';margin-bottom:8px':''}">
+            <div style="color:var(--text2)"><div style="margin-bottom:3px">Valor unit.</div><span class="ed" onclick="se(this,'v',${ri},'${fid}')" style="color:${c.v?'var(--blue)':'var(--text3)'}">${c.v?fmt(pv(c.v)):'+valor'}</span></div>
+            <div style="color:var(--text2)"><div style="margin-bottom:3px">Total</div><b>${tot>0?fmt(tot):'—'}</b></div>
+          </div>
+          ${c.o?`<div style="font-size:11px;color:var(--text2);border-top:1px solid var(--border);padding-top:6px">${edt(c.o,'o',ri,fid)}</div>`:''}
+        </div>`;
+      }).join('');
+    } else {
+      tblWrap.style.overflowX='auto';
+      const tbl=document.createElement('table');
+      tbl.style.minWidth='1050px';
+      tbl.innerHTML=`<thead><tr><th>Item</th><th>Qtd</th><th>Prioridade</th><th>Status</th><th>Filial origem</th><th>Solicitante</th><th>Dt. Compra</th><th style="color:var(--blue)">Prev. Entrega</th><th>Valor unit.</th><th>Total</th><th>Obs.</th>${isG?'<th></th>':''}</tr></thead>
     <tbody>${itens.map(c=>{
       const ri=allComps.indexOf(c);
       const tot=pv(c.v)*pv(c.q);
@@ -997,8 +1060,8 @@ function renderComp(data){
       ${isG?`<td><button class="btn-del" onclick="delItemComp(${ri},'${fid}')" title="Excluir">${TRASH}</button></td>`:''}
       </tr>`;
     }).join('')}</tbody>`;
-
-    tblWrap.appendChild(tbl);
+      tblWrap.appendChild(tbl);
+    }
     section.appendChild(hdr);section.appendChild(tblWrap);
     container.appendChild(section);
   });
